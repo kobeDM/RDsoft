@@ -7,19 +7,36 @@ import datetime
 import time
 import glob
 import getpass
+import argparse
 
-#daq usage printf("./main [outfileheader] [sub_entries] [sampling_rate(Hz)] [sampling_number] [dynamic range 0(+/-25V) or 1(+/-2.5V)] [ch1 Vth(V)] [ch2 Vth(V)] [trigger source 0(ch1) or 1(ch2) or 2(or)] [Trig Edge RISE=0 or FALL=1]\n");
 
-args = sys.argv
-if len(args) >1:
-    sub_dir=args[1]
-else:
-    sub_dir = datetime.date.today().strftime('%Y%m%d')
+
+#args = sys.argv
+#if len(args) >1:
+#    sub_dir=args[1]
+#else:
+
+
+def parser():
+    argparser=argparse.ArgumentParser()
+    argparser.add_argument("Vth",type=float,nargs='?',const=None,help='[threhold (V)]')
+    opts=argparser.parse_args()
+    return(opts)
 
 print("###runRD-daq.py###")
 print("\tinput possword for sudo command.")
 passwd=(getpass.getpass()+'\n').encode()
 
+sub_dir = datetime.date.today().strftime('%Y%m%d')
+
+args = parser()
+if(args.Vth!=None):
+    trigger_level=args.Vth
+else:
+    trigger_level=0.05 #V        
+    
+
+    
 def runDAQ():
     HOME=os.environ['HOME']+'/'
     daq_cmd=HOME+'adalm/adalm_daq/bin/daq'
@@ -31,13 +48,14 @@ def runDAQ():
     frequency=10000000
     sample_num=1024
     dynamic_range=1 #0=25V 1=2.5V
-    trigger_level=0.05 #V
+    #    trigger_level=0.05 #V
     trigger_source=0 #0=ch1 1=ch2
     trigger_type=0 #0=rise 1=fall
     mk_subrun(data_dir+sub_dir)
     file_name=data_dir+sub_dir+"/sub"
-    #subrun_name = find_newrun(data_dir+sub_dir+'/')
     #for adalm
+    #daq usage ./daq [outfileheader] [sub_entries] [sampling_rate(Hz)] [sampling_number] [dynamic range 0(+/-25V) or 1(+/-2.5V)] [ch1 Vth(V)] [ch2 Vth(V)] [trigger source 0(ch1) or 1(ch2) or 2(or)] [Trig Edge RISE=0 or FALL=1]
+
     cmd = ['sudo','-S', daq_cmd
     ,file_name
     ,str(entries)
