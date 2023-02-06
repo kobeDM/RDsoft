@@ -26,13 +26,14 @@ if(args.Vth!=None):
     trigger_level=args.Vth
 else:
     trigger_level=0.05 #V        
-    
 
+#commands
+HOME=os.environ['HOME']+'/'
 backup_cmd=HOME+'RDsoft/RD-backup.py'
+daq_cmd=HOME+'adalm/adalm_daq/bin/daq'
+
     
 def runDAQ():
-    HOME=os.environ['HOME']+'/'
-    daq_cmd=HOME+'adalm/adalm_daq/bin/daq'
     data_dir = './data/' # with the last slash
     copy_script = HOME+'bin/radon_backup.sh'
     #daq params
