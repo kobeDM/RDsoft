@@ -9,14 +9,6 @@ import glob
 import getpass
 import argparse
 
-
-
-#args = sys.argv
-#if len(args) >1:
-#    sub_dir=args[1]
-#else:
-
-
 def parser():
     argparser=argparse.ArgumentParser()
     argparser.add_argument("Vth",type=float,nargs='?',const=None,help='[threhold (V)]')
@@ -36,6 +28,7 @@ else:
     trigger_level=0.05 #V        
     
 
+backup_cmd=HOME+'RDsoft/RD-backup.py'
     
 def runDAQ():
     HOME=os.environ['HOME']+'/'
@@ -86,20 +79,8 @@ def mk_subrun(dirname):
     print("making directory "+dirname)
     subprocess.run(['mkdir', '-p', dirname ])
 
-
-    
-#def find_newrun(dir_name):
-#    data_header = 'sub'
-#    files = glob.glob(dir_name+'*.dat')
-#    if len(files) == 0:
-#        return data_header+'0'.zfill(4)
-#    else:
-#        files.sort(reverse=True)
-#        num_pos = files[0].find('sub')
-#        return data_header+str(int(files[0][num_pos+3:num_pos+3+4])+1).zfill(4)
-
-
 def auto_run():
+    subprocess.Popen(backup_cmd)
     while(True):
         runDAQ()
         time.sleep(1)
