@@ -19,7 +19,6 @@ print("###runRD-daq.py###")
 print("\tinput possword for sudo command.")
 passwd=(getpass.getpass()+'\n').encode()
 
-sub_dir = datetime.date.today().strftime('%Y%m%d')
 
 args = parser()
 if(args.Vth!=None):
@@ -29,13 +28,12 @@ else:
 
 #commands
 HOME=os.environ['HOME']+'/'
-backup_cmd=HOME+'RDsoft/RD-backup.py'
-daq_cmd=HOME+'adalm/adalm_daq/bin/daq'
+backup_cmd=HOME+'RDsoft/bin/runRD-backup.py'
+daq_cmd=HOME+'RDsoft/bin/RD-daq'
+
 
     
 def runDAQ():
-    data_dir = './data/' # with the last slash
-    copy_script = HOME+'bin/radon_backup.sh'
     #daq params
     fileheader="sub"
     entries=1000
@@ -45,9 +43,11 @@ def runDAQ():
     #    trigger_level=0.05 #V
     trigger_source=0 #0=ch1 1=ch2
     trigger_type=0 #0=rise 1=fall
-    mk_subrun(data_dir+sub_dir)
-    file_name=data_dir+sub_dir+"/sub"
-    #for adalm
+    sub_dir = datetime.date.today().strftime('%Y%m%d')
+    sub_dir=mk_subrun(sub_dir)
+    file_name=sub_dir+"/RD"
+
+    #for adalm 
     #daq usage ./daq [outfileheader] [sub_entries] [sampling_rate(Hz)] [sampling_number] [dynamic range 0(+/-25V) or 1(+/-2.5V)] [ch1 Vth(V)] [ch2 Vth(V)] [trigger source 0(ch1) or 1(ch2) or 2(or)] [Trig Edge RISE=0 or FALL=1]
 
     cmd = ['sudo','-S', daq_cmd
@@ -61,7 +61,7 @@ def runDAQ():
     ,str(trigger_source)
     ,str(trigger_type)
     ]
-#    print_cmd(cmd)
+    print_cmd(cmd)
     subprocess.run(cmd,input=passwd)
 
 def print_cmd(cmd):
@@ -71,14 +71,14 @@ def print_cmd(cmd):
 
 
 def mk_subrun(dirname):
+    dirname_next=dirname
     if  os.path.exists(dirname):
         print(dirname+" exists.")
         files = glob.glob(dirname+'*')
-        dirname_bu=dirname+"_bu"+format(len(files))
-        print("backup "+dirname+" to "+dirname_bu)
-        subprocess.run(['mv', dirname, dirname_bu ])
-    print("making directory "+dirname)
-    subprocess.run(['mkdir', '-p', dirname ])
+        dirname_next=dirname+"_"+format(len(files))
+    print("making directory "+dirname_next)
+    subprocess.run(['mkdir', '-p', dirname_next ])
+    return dirname_next
 
 def auto_run():
     subprocess.Popen(backup_cmd)
