@@ -24,7 +24,7 @@ args = parser()
 if(args.Vth!=None):
     trigger_level=args.Vth
 else:
-    trigger_level=0.05 #V        
+    trigger_level=0.1 #V        
 
 #commands
 HOME=os.environ['HOME']+'/'
