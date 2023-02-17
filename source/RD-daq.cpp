@@ -25,9 +25,9 @@ int main(int argc, char* argv[])
 	//timestamp
 	struct timeval tv;
 
-	if(argc!=10){
-		printf("./main [outfileheader] [sub_entries] [sampling_rate(Hz)] [sampling_number] [dynamic range 0(+/-25V) or 1(+/-2.5V)] [ch1 Vth(V)] [ch2 Vth(V)] [trigger source 0(ch1) or 1(ch2) or 2(or)] [Trig Edge RISE=0 or FALL=1]\n");
-		printf("ex) daq out 1000 1000000 1024 2 0.1 0.1 2 0\n");
+	if(argc!=11){
+		printf("./RD-daq outfileheader sub_entries sampling_rate(Hz) sampling_number dynamic_range_(0(+/-25V) or 1(+/-2.5V)) ch1_Vth(V)] ch2_Vth(V)] trigger_source_(0(ch1) or 1(ch2) or 2(or)) Trig_Edge_(RISE=0 or FALL=1) comment\n");
+		printf("ex) RD-daq out 1000 1000000 1024 2 0.1 0.1 2 0\n");
 		return -1;
 	}
 	
@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
 	double Vth2 = double(atof(argv[7])); // V	(TRIGGER THRESHOLD)
 	int trigger_source = atoi(argv[8]);
 	int trig_edge = atoi(argv[9]);
-
+	const char* comment = argv[10];
 	//----------------------------
 	//  Open ADALM2000
 	M2k *ctx = m2kOpen();
@@ -137,6 +137,7 @@ int main(int argc, char* argv[])
 	fprintf(fconf,"TRIGGER THRESHOLD CH2  : %.3lf (V)\n", Vth2);
 	fprintf(fconf,"TRIGGER SOURCE         : %d    [ch1=0,ch2=1,or-trig=2,and-trig=3]\n",trigger_source);
 	fprintf(fconf,"TRIGGER EDGE (R=0,F=1) : %d\n",        trig_edge);
+	fprintf(fconf,"COMMENT                : %s\n",        comment);
 	fprintf(fconf,"-----------------------------------\n");
 
 	FILE* ofile;
