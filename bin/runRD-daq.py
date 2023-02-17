@@ -11,8 +11,8 @@ import argparse
 
 def parser():
     argparser=argparse.ArgumentParser()
-    argparser.add_argument("Vth",type=float,nargs='?',const=None,help='[threhold (V)]')
-    argparser.add_argument("-c","--comment", help="coment",dest='comment',action="store_true",default="comment")
+    argparser.add_argument("-V","--Vth",type=float,default=0.1,help='[threhold (V)]')
+    argparser.add_argument("-c","--comment", help="comment",default="comment")
     opts=argparser.parse_args()
     return(opts)
 
