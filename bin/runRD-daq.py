@@ -11,7 +11,8 @@ import argparse
 
 def parser():
     argparser=argparse.ArgumentParser()
-    argparser.add_argument("Vth",type=float,nargs='?',const=None,help='[threhold (V)]')
+    argparser.add_argument("-V","--Vth",type=float,default=0.1,help='[threhold (V)]')
+    argparser.add_argument("-c","--comment", help="comment",default="comment")
     opts=argparser.parse_args()
     return(opts)
 
@@ -24,8 +25,9 @@ args = parser()
 if(args.Vth!=None):
     trigger_level=args.Vth
 else:
-    trigger_level=0.05 #V        
-
+    trigger_level=0.1 #V        
+comment=args.comment
+    
 #commands
 HOME=os.environ['HOME']+'/'
 backup_cmd=HOME+'RDsoft/bin/runRD-backup.py'
@@ -60,6 +62,7 @@ def runDAQ():
     ,str(trigger_level)
     ,str(trigger_source)
     ,str(trigger_type)
+    ,comment       
     ]
     print_cmd(cmd)
     subprocess.run(cmd,input=passwd)
