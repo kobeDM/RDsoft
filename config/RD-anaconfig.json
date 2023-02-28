@@ -1,0 +1,45 @@
+{
+  "ana":{
+      "cal_factor_a_RD1":7.5,
+      "cal_factor_a_RD2":7.5,
+      "cal_factor_a_RD3":7.5,
+      "cal_factor_b_RD1":0,
+      "cal_factor_b_RD2":0,
+      "cal_factor_b_RD3":0,
+      "neg_veto_factor":-0.5,
+      "twin_avg_start_us":40,
+      "twin_avg_window_us":5,
+      "ene_reso" :2.5,
+      "ene_Po218":6.00235,
+      "ene_Po214":7.68682,
+      "ene_win_upper":0,
+      "ene_win_lower":3,
+      "time_win_minute":10,
+      "time_win_hour":6,
+      "integ_win_start_in_days":2,
+      "integ_win_end_in_days":4.0
+  },
+    "view":{      
+	"show_rate_max":100.0,
+	"show_sp_bin":100,
+	"show_sp_min":-0.1,
+	"show_sp_max":3.0,
+	"show_sp_bin_MeV":100,
+	"show_sp_min_MeV":0,
+	"show_sp_max_MeV":10
+    },
+  "cut_conf":{
+    "areaphcut":1,
+    "areaph_slope":1,
+    "areaph_offset":1,
+    "areaph_slope_upper":200,
+    "areaph_offset_upper":0,
+    "areaph_slope_lower":80,
+    "areaph_offset_lower":0,
+    "areaph_slope":1,
+    "areaph_offset":1,
+    "chargecut":0,
+    "charge_min":1,
+    "charge_max":100
+  }
+}

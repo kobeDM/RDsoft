@@ -2,7 +2,9 @@
 
 import subprocess, os,sys
 import argparse
+import datetime
 from subprocess import PIPE
+
 
 def parser():
     argparser=argparse.ArgumentParser()
@@ -12,19 +14,17 @@ def parser():
     argparser.add_argument("config",type=str,nargs='?',const=None,help='[config file name]')
     argparser.add_argument("-d","--display", dest='display',help='display only',action="store_true")
     argparser.add_argument("-b","--batch", help="batch mode",dest='batch',action="store_true")
-    argparser.add_argument("-c","--chain", help="from chain (not process the raw2root) ",dest='chain',action="store_true")
+    argparser.add_argument("-c","--chain", help="from chain (skip dat2root) ",dest='chain',action="store_true")
     argparser.add_argument("-v","--verbose", help="verbose",dest='verbose',action="store_true")
     opts=argparser.parse_args()
     return(opts)
 
 
 HOME=os.environ['HOME']+'/'
-#CONFIG_DEFAULT=HOME+'RD2/analyzer/json/config.json'
-CONFIG_DEFAULT=HOME+'RDsoft/analyzer/json/RD-anaconfig.json'
-analyzerbin='RDsoft/bin/'
-datadir='data/'
-rootdir='rootfile/'
-analdir='anal/'
+CONFIG_SOURCE=HOME+'RDsoft/config/RD-anaconfig.json'
+analyzerbin='RDsoft/bin'
+rootmacrodir='RDsoft/root_macros'
+datadir='../data'
 file_from=0
 file_to=0
 display=0
@@ -32,15 +32,13 @@ batch_mode=0
 chain_mode=0
 verbose=0
 
-#ad2_dat2root=HOME+analyzerbin+'ad2_dat2root '
-#ad2_vis=HOME+analyzerbin+'ad2_rnrate '
-adalm_dat2root=HOME+analyzerbin+'adalm_dat2root '
-adalm_vis=HOME+analyzerbin+'adalm_rnrate '
-chainmacro=HOME+analyzerbin+'chain.cxx'
+RD_mkconfig=HOME+analyzerbin+'/RD-mkconfig.py '
+RD_dat2root=HOME+analyzerbin+'/RD_dat2root '
+RD_vis=HOME+analyzerbin+'/RD_rnrate '
+chainmacro=HOME+rootmacrodir+'/chain.cxx'
 
-print('usage: run_RD2anal.py [-d, --display] [subdir] [from] [to] [configfile]')
+#print('usage: run-RDana.py [-d, --display] [dir] [from] [to] [configfile]')
 
-#args = sys.argv
 args = parser()
 if args.display:
     #switch for diaplay only    
@@ -65,138 +63,141 @@ if args.verbose:
 if(args.subdir):
     subdir=args.subdir
 else:
-    cmd='ls -ltr '+ datadir +' | tail -1' 
+    cmd='ls -ltrd '+ datadir +'/*/ | grep 20 | tail -1' 
     if(verbose):
         print("cmd:",cmd)   
     proc=subprocess.run(cmd,shell=True, stdout=PIPE, stderr=PIPE)
-    if(verbose):
-        print(proc.stdout)
-        print(proc.stdout.decode().encode('utf-8'))
-    #    proc=subprocess.run(cmd,shell=True, stdout=PIPE, stderr=PIPE,text=True)
-    subdir=proc.stdout.decode().encode('utf-8').split(' ')[len(proc.stdout.decode().encode('utf-8').split(' '))-1]
+    subdir=proc.stdout.decode().split(' ')[len(proc.stdout.decode().split(' '))-1]
     if(verbose):
         print("subdir:",subdir)   
-    subdir=subdir.replace('/', '').replace('\n','')+'/'
-    if(verbose):
-        print("subdir:",subdir)   
-    #    subdir=subdir.replace('/', '').replace('\n','')
+    #subdir=subdir.replace('/', '').replace('\n','')+'/'
+    subdir=subdir.split('/')[len(proc.stdout.decode().split('/'))-2]
+subdir=subdir.replace('\n','')+'/'
+if(verbose):
+    print("subdir:",subdir)   
 
-if(args.fromf!=None):
-    file_from=args.fromf
+if verbose:
+    RD_dat2root=RD_dat2root+" -v "
+    RD_vis=RD_vis+" -v "
 
-if(args.tof!=None):
-    file_to=args.tof
-else:
-    cmd='ls -ltr '+ datadir+subdir +'*.dat | tail -1'
-    if(verbose):
-        print("cmd:",cmd)
-    proc=subprocess.run(cmd,shell=True, stdout=PIPE, stderr=PIPE,text=True)
-    file_to=(int)((proc.stdout.split(' ')[len(proc.stdout.split(' '))-1]).replace('sub', '').split('.')[-3].split('/')[2])
-
-
-
-subdir=subdir.replace('/', '').replace('\n','')+'/'
-file_num=file_to-file_from+1
-
-dirs=[datadir,rootdir,analdir]
+#directories
+rootdir=subdir+'rootfile'
+mondir='rnmon/'+format(datetime.date.today().year)
+dirs=[subdir,rootdir,mondir]
 for dir in dirs:
     cmd='ls -d '+dir
     ret=subprocess.run(cmd,shell=True, stdout=PIPE, stderr=PIPE)
     if(ret.returncode != 0):
-        subprocess.run('mkdir '+dir,shell=True); 
-    outdir=dir+subdir
-    cmd='ls -d '+outdir
-    ret=subprocess.run(cmd,shell=True, stdout=PIPE, stderr=PIPE)
-    if(ret.returncode != 0):
-        subprocess.run('mkdir '+outdir,shell=True); 
-    if(verbose):    
-        print('output directory:'+outdir)
+        subprocess.run('mkdir -p '+dir,shell=True); 
 
-config_target=analdir+subdir+"config.json"
+
+if(args.fromf!=None):
+    file_from=args.fromf
+print("file_from:"+format(file_from))
+if(args.tof!=None):
+    file_to=args.tof
+else:
+    cmd='ls -ltr '+ datadir+"/"+subdir +'*.dat | tail -1'
+    if(verbose):
+        print("cmd:",cmd)
+    proc=subprocess.run(cmd,shell=True, stdout=PIPE, stderr=PIPE)
+    file_to=(int)((proc.stdout.decode().split(' ')[len(proc.stdout.decode().split(' '))-1]).split('/')[-1].replace('RD_', '').replace('.dat', ''))
+
+print("file_to:"+format(file_to))
+
+file_num=file_to-file_from+1
+
+#detector check        
+cmd='pwd'
+if (verbose):
+    print('executing '+cmd)            
+proc=subprocess.run(cmd,shell=True, stdout=PIPE, stderr=PIPE)
+detector_id=proc.stdout.decode().split('RD')[len(proc.stdout.decode().split('RD'))-1].split('/')[0]
+detector='RD'+detector_id
+print("detector: "+detector)
+
+#config files
+daq_config_in=datadir+"/"+subdir+"RD.cnf"
+json_config_in=CONFIG_SOURCE
+config_target=subdir+"RD-anaconfig.json"
 
 if(args.config):
     configfile=args.config
 elif (os.path.isfile(config_target)):
-     configfile=config_target
-else: 
-    cmd='cp '+CONFIG_DEFAULT+' '+config_target
+    configfile=config_target
+else:
+    cmd=RD_mkconfig+" "+daq_config_in+" "+json_config_in+" "+config_target
+    if(verbose):
+        print("cmd:",cmd)
     subprocess.run(cmd,shell=True)
     configfile=config_target
+#else:
+#    print("config file make failed." )
+#    exit(1)
+    #cmd='cp '+CONFIG_SOURCE+' '+config_target
+    #subprocess.run(cmd,shell=True)
+    #configfile=config_target
 
 if(verbose):
-    print("subdir:",subdir)
+    #print("subdir:",subdir)
     print("config file:",configfile)
     print('input file:',file_from,'-',file_to,'(',file_num,' files.)')
 
-
-#if(display!=1 and not chain_mode):
+#start from dat2root
 if(not display and not chain_mode):
-
     for file_id in range(file_from,file_to+1):
-        infile='sub'+format(file_id).zfill(4)+'.0000'
+        infile='RD_'+format(file_id)
         infile_full=datadir+'/'+subdir+infile+'.dat '
-        cmd=ad2_dat2root+infile_full+configfile
+        if (verbose):
+            print(infile_full)
+        cmd=RD_dat2root+infile_full+configfile
         if (verbose):
             print('executing '+cmd)
         subprocess.run(cmd,shell=True) 
-        rootfile=infile+'.root'
+        rootfile=rootdir+"/"+infile+'.root'
         visfile=infile+'_vis.root'
-        cmd='mv ' +rootfile+' '+rootdir+subdir
+        cmd='mv out.root '+rootfile
         if (verbose):
             print('executing '+cmd)
         subprocess.run(cmd,shell=True)
-        #ad2_vis batch mode
-        cmd=ad2_vis+' -b '+rootdir+subdir+'/'+rootfile+' '+configfile
+        #RD_vis batch mode
+        cmd=RD_vis+' -b '+rootfile+' '+configfile+' '+detector_id
         if (verbose):
             print('executing '+cmd)
         subprocess.run(cmd,shell=True)
-#        cmd='mv ' +visfile+' '+analdir+subdir
-#        subprocess.run(cmd,shell=True)
 
-    
 if (file_num>1):
-    #rootfiles
-    infiles='sub_chain_'+format(file_from)+'-'+format(file_to)
-    rootfiles=infiles+'.root'
-    visfiles=infiles+'_vis.root'
+    # more than two files
+    rootfiles=rootdir+"/RD_"+format(file_from)+'-'+format(file_to)+'.root'
+    visfiles=rootdir+"/RD_"+format(file_from)+'-'+format(file_to)+'_vis.root'
     if(not display):
         #chain
-        cmd='cd '+rootdir+subdir+'; root -q \''+chainmacro+'('+format(file_from)+','+format(file_to)+')\''
-        if (verbose):
-            print('executing '+cmd)      
+        cmd='cd '+rootdir+'; root -q \''+chainmacro+'('+format(file_from)+','+format(file_to)+')\''
         subprocess.run(cmd,shell=True)
-        cmd='pwd'
-        if (verbose):
-            print('executing '+cmd)            
-        subprocess.run(cmd,shell=True)
-        cmd=ad2_vis+' -b '+rootdir+subdir+'/'+rootfiles+' '+configfile
-        if (verbose):
-            print('executing '+cmd)
-        subprocess.run(cmd,shell=True)
-#        cmd='mv ' +visfiles+' '+analdir+subdir
-#        subprocess.run(cmd,shell=True)
-        
-
-#display
-if file_num>1:
-    if batch_mode:
-        cmd=ad2_vis+' -b '+rootdir+subdir+'/'+rootfiles+' '+configfile
-
+    if(batch_mode):    
+        cmd=RD_vis+' -b '+rootfiles+' '+configfile+' '+detector_id
     else:
-        cmd=ad2_vis+' '+rootdir+subdir+'/'+rootfiles+' '+configfile
-
-#    subprocess.run(cmd,shell=True)
+        cmd=RD_vis+' '+rootfiles+' '+configfile+' '+detector_id
+    
 else:
-    if batch_mode:
-        cmd=ad2_vis+' -b '+rootdir+subdir+'/'+rootfile+' '+configfile
+#one file only  
+    infile='RD_'+format(file_from)
+    rootdir=subdir+'rootfile'
+    rootfile=rootdir+"/"+infile+'.root'  
+     
+    #    if(not display):
+    if(batch_mode):    
+    #batch_mode:
+        cmd=RD_vis+' -b '+rootfile+' '+configfile+' '+detector_id
 
     else:
-        cmd=ad2_vis+' '+rootdir+subdir+'/'+rootfile+' '+configfile
+        cmd=RD_vis+' '+rootfile+' '+configfile+' '+detector_id
 
         
 if(verbose):
     print('executing '+cmd)
-#if(not chain_mode):
-#if(verbose):
-print("cmd: ",cmd)
+    
 subprocess.run(cmd,shell=True)
+
+#cmd='mv rate.dat '+subdir
+#subprocess.run(cmd,shell=True)
