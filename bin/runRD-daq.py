@@ -64,7 +64,7 @@ def runDAQ():
     ,str(trigger_type)
     ,comment       
     ]
-    print_cmd(cmd)
+    #print_cmd(cmd)
     subprocess.run(cmd,input=passwd)
 
 def print_cmd(cmd):
