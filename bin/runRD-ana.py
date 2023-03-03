@@ -8,11 +8,12 @@ from subprocess import PIPE
 
 def parser():
     argparser=argparse.ArgumentParser()
-    argparser.add_argument("subdir",type=str,nargs='?',const=None,help='[subdirectory name]')
+    argparser.add_argument("subdir",type=str,nargs='?',const=None,help='[subdirectory name YYYYMMDD]')
     argparser.add_argument("fromf",type=int,nargs='?',const=None,help='[file from]')
     argparser.add_argument("tof",type=int,nargs='?',const=None,help='[file to]')
-    argparser.add_argument("config",type=str,nargs='?',const=None,help='[config file name]')
-    argparser.add_argument("-d","--display", dest='display',help='display only',action="store_true")
+    argparser.add_argument("datadir",type=str,nargs='?',const=None,help='[data directory (default: ../data)]')
+    argparser.add_argument("config",type=str,nargs='?',const=None,help='[config file name (default: YYYYMMDD/RD-anaconfig.json)]') 
+    argparser.add_argument("-d","--display", dest='display',help='rate analysis and display (skip dat2root and chain)',action="store_true")
     argparser.add_argument("-b","--batch", help="batch mode",dest='batch',action="store_true")
     argparser.add_argument("-c","--chain", help="from chain (skip dat2root) ",dest='chain',action="store_true")
     argparser.add_argument("-v","--verbose", help="verbose",dest='verbose',action="store_true")
@@ -25,6 +26,8 @@ CONFIG_SOURCE=HOME+'RDsoft/config/RD-anaconfig.json'
 analyzerbin='RDsoft/bin'
 rootmacrodir='RDsoft/root_macros'
 datadir='../data'
+
+
 file_from=0
 file_to=0
 display=0
@@ -38,27 +41,34 @@ RD_vis=HOME+analyzerbin+'/RD_rnrate '
 chainmacro=HOME+rootmacrodir+'/chain.cxx'
 
 #print('usage: run-RDana.py [-d, --display] [dir] [from] [to] [configfile]')
+print('### run-RDana.py ###')
 
 args = parser()
+
 if args.display:
     #switch for diaplay only    
-    print("display only")
+    print(" rate analysis and display (skip the dat2root and root-chain)")
     display=1
 
 if args.batch:
     #switch for batch mode
-    print("batch mode")
+    print(" batch mode")
     batch_mode=1
 
 if args.chain:
     #switch for from chain
-    print("from chain")
+    print(" from chain")
     chain_mode=1
 
 if args.verbose:
     #verbose
-    print("verbose")
+    print(" verbose")
     verbose=1
+
+if args.datadir:
+    #override
+    datadir=args.datadir
+
 
 if(args.subdir):
     subdir=args.subdir
@@ -93,7 +103,7 @@ for dir in dirs:
 
 if(args.fromf!=None):
     file_from=args.fromf
-print("file_from:"+format(file_from))
+#print(" file_from:"+format(file_from))
 if(args.tof!=None):
     file_to=args.tof
 else:
@@ -103,7 +113,7 @@ else:
     proc=subprocess.run(cmd,shell=True, stdout=PIPE, stderr=PIPE)
     file_to=(int)((proc.stdout.decode().split(' ')[len(proc.stdout.decode().split(' '))-1]).split('/')[-1].replace('RD_', '').replace('.dat', ''))
 
-print("file_to:"+format(file_to))
+#print("file_to:"+format(file_to))
 
 file_num=file_to-file_from+1
 
@@ -114,7 +124,10 @@ if (verbose):
 proc=subprocess.run(cmd,shell=True, stdout=PIPE, stderr=PIPE)
 detector_id=proc.stdout.decode().split('RD')[len(proc.stdout.decode().split('RD'))-1].split('/')[0]
 detector='RD'+detector_id
-print("detector: "+detector)
+
+#analysis condtion display
+print(" files:"+format(file_from)+" - "+format(file_to))
+print(" detector: "+detector)
 
 #config files
 daq_config_in=datadir+"/"+subdir+"RD.cnf"
