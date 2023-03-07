@@ -1,25 +1,53 @@
-cmake_minimum_required(VERSION 3.1.3)
-set (CMAKE_CXX_STANDARD 11)
-project(analog LANGUAGES CXX)
+# CMakeLists.txt for event package. It creates a library with dictionary and a main program
+cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+
+set(CMAKE_VERBOSE_MAKEFILE 1)
+
+project(ROOT_COMPILE)
+
+#set(Targets ADALM2Root)
+set(Targets RD_dat2root RD_rnrate)
+#set(Targets RD_rnrate)
+
+#add_executable(RD_dat2root "RD_dat2root.cpp")
+#add_executable(RD_rnrate "RD_rnrate.cpp")
+
+#set(Targets ToRootFour Show EventShow Offset Height PeakTime RiseFallTime)
+# You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
+#   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
+#   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
+list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
+list(APPEND CMAKE_MODULE_PATH $ENV{ROOTSYS}/etc/cmake)
 
 
-if (NOT WIN32)
-	find_library(PTHREAD_LIBRARIES pthread)
-endif()
+#---Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
+find_package(ROOT REQUIRED)
+#find_package(ROOT REQUIRED COMPONENTS RIO Net)
+include_directories(${ROOT_INCLUDE_DIRS})
 
-if (LIBM2K_VERSION)			# in-source build
-	set(PROJECT_VERSION ${LIBM2K_VERSION})
-else()					# standalone build
-	set(PROJECT_VERSION "1.0.0")
-	find_package(libm2k REQUIRED)
-endif()
 
-add_executable(RD-daq "RD-daq.cpp")
+#---Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
+include(${ROOT_USE_FILE})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+#include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-target_link_libraries(RD-daq PRIVATE libm2k::libm2k)
+
+file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*)
+file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*)
+
+
+#---Create a shared library with geneated dictionary
+foreach(path IN LISTS Targets)
+  get_filename_component(target ${path} NAME_WE)
+  add_executable(${target} ${path}
+													 ${sources} ${headers})
+	target_link_libraries(${target} 
+												${ROOT_LIBRARIES}
+												Spectrum
+												libstdc++.so
+												libm.so.6)
+endforeach()
+
 
 set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/..)
-install(TARGETS RD-daq DESTINATION bin)
-
-
-
+install(TARGETS ${Targets} DESTINATION bin)
