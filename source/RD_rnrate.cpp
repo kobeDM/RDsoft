@@ -154,8 +154,11 @@ int main(int argc, char** argv){
   filename = outfile_tmp.substr(0,pos);
   //std::string 
   TString   ratefilename=filename+"/rate.dat";
+  TString   pngfilename=filename+"/rnrate.png";
+
   if(verbose)
     std::cout<<"ratefile: "<<ratefilename<<std::endl;
+    std::cout<<"imagefile: "<<pngfilename<<std::endl;
   char tmpc[3][32];
 
   //TFile* 
@@ -227,12 +230,16 @@ int main(int argc, char** argv){
 
   //int inte_start_samp = 700;
   //int inte_end_samp = 2000;
-  TLine* l_inte_s = new TLine(twin_avg[0]/sampling_hertz*1e6,-dynamic_range,twin_avg[0]/sampling_hertz*1e6,dynamic_range);
-  TLine* l_inte_e = new TLine(twin_avg[1]/sampling_hertz*1e6,-dynamic_range,twin_avg[1]/sampling_hertz*1e6,dynamic_range);
-  l_inte_s->SetLineStyle(10);
-  l_inte_e->SetLineStyle(10);
-  l_inte_s->SetLineColor(kMagenta+1);
-  l_inte_e->SetLineColor(kMagenta+1);
+  TLine* l_inte_s = new TLine(twin_avg[0]/sampling_hertz*1e6,-0.5,twin_avg[0]/sampling_hertz*1e6,0.5);
+  TLine* l_inte_e = new TLine(twin_avg[1]/sampling_hertz*1e6,-0.5,twin_avg[1]/sampling_hertz*1e6,0.5);
+  l_inte_s->SetLineStyle(1);
+  l_inte_e->SetLineStyle(1);
+  l_inte_s->SetLineWidth(2);
+  l_inte_e->SetLineWidth(2);
+  //  l_inte_s->SetLineColor(kMagenta+1);
+  //l_inte_e->SetLineColor(kMagenta+1);
+  l_inte_s->SetLineColor(kGreen+2);
+  l_inte_e->SetLineColor(kGreen+2);
 
 
   //##############################
@@ -318,18 +325,36 @@ int main(int argc, char** argv){
     }
     h_ph_nc->Fill(volt_max-offset);
     if(veto==0){//||!vetocut){
+      thisbin=int((timestamp-first_ev_time)/60/60/24/tbin);
 	h_ph->Fill(volt_max-offset);
 	h_q->Fill(charge);
 	h_ph_q->Fill(volt_max-offset,charge);
 	if(E>Eth_MeV)h_ene->Fill(E);
 	if(ene_Po218*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po218*(1+ene_win_upper*ene_reso/100)){
 	  h_po218->Fill(E);
+	  if(thisbin>-1&&thisbin<binmax){
+	    po218_tdep[thisbin]++;
+	    po218_time[thisbin]=timestamp;
+	    if(verbose){
+	      std::cout <<"Po218\t"<<thisbin<<"\t"<<E<<"\t"<<timestamp<<"\t"<<first_ev_time<<std::endl;
+	    }
+	  }
 	  if((timestamp-first_ev_time)/60/60/24>integ_win_start_in_days&&(timestamp-first_ev_time)/60/60/24<integ_win_end_in_days){
 	    h_po218_sel->Fill(E);
 	  }
 	}
 	if(ene_Po214*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po214*(1+ene_win_upper*ene_reso/100)){
 	  h_po214->Fill(E);
+   if(ene_Po214*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po214*(1+ene_win_upper*ene_reso/100)){
+	//thisbin=int((timestamp-first_ev_time)/60/60/24/tbin);
+      if(thisbin>-1&&thisbin<binmax){
+	po214_tdep[thisbin]++;
+	po214_time[thisbin]=timestamp;
+	if(verbose){
+	  std::cout <<"Po214\t"<<thisbin<<"\t"<<E<<"\t"<<timestamp<<"\t"<<first_ev_time<<std::endl;
+	   }
+      }
+
 	  if((timestamp-first_ev_time)/60/60/24>integ_win_start_in_days&&(timestamp-first_ev_time)/60/60/24<integ_win_end_in_days){
 	  h_po214_sel->Fill(E);
 	  }
@@ -340,35 +365,41 @@ int main(int argc, char** argv){
     //rate calc (previous event)
     double rate;
     if(timestamp==cut_after_time){
-      rate = 9999;
+      rate = 1e10;
     }else{
-      rate = 1/(timestamp - cut_after_time);
+      rate = 1./(timestamp - cut_after_time);
     }
     cut_after_time = ev_end_time;
-    if(ev%1000==999)   std::cout << "Ev." << ev  <<"/"<<ev_max<< " | Rate : " << std::setprecision(10) << rate <<"\n"; 
-    if(ene_Po218*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po218*(1+ene_win_lower*ene_reso/100)){
+    if(ev%10000==0)   std::cout << "Ev." << ev  <<"/"<<ev_max<< " | Rate : " << std::setprecision(10) << rate <<"\t\t\r"<<std::flush; 
+    // thisbin=int((timestamp-first_ev_time)/60/60/24/tbin);
+      
+    if(ene_Po218*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po218*(1+ene_win_upper*ene_reso/100)){
       //po218
-      thisbin=int((timestamp-first_ev_time)/60/60/24/tbin);
-      if(thisbin>-1&&thisbin<binmax){
+      /** if(thisbin>-1&&thisbin<binmax){
 	po218_tdep[thisbin]++;
 	po218_time[thisbin]=timestamp;
-      }
+	if(verbose){
+	  std::cout <<"Po218\t"<<thisbin<<"\t"<<E<<"\t"<<timestamp<<"\t"<<first_ev_time<<std::endl;
+	   }
+	   }**/
     }
-
+    //    std::cout <<std::endl; 
 
     //po214
-      if(ene_Po214*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po214*(1+ene_win_upper*ene_reso/100)){
-          //where region
-      thisbin=int((timestamp-first_ev_time)/60/60/24/tbin);
+    /**      if(ene_Po214*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po214*(1+ene_win_upper*ene_reso/100)){
+	//thisbin=int((timestamp-first_ev_time)/60/60/24/tbin);
       if(thisbin>-1&&thisbin<binmax){
 	po214_tdep[thisbin]++;
 	po214_time[thisbin]=timestamp;
-      }
+	if(verbose){
+	  std::cout <<"Po214\t"<<thisbin<<"\t"<<E<<"\t"<<timestamp<<"\t"<<first_ev_time<<std::endl;
+	   }
+	   }**/
 
     }
   }
   live = (ev_start_time - first_ev_time)/60/60/24; //days
-  std::cout << "Live-time : " << live << "days" <<std::endl;
+  std::cout <<std::endl<< "Live-time : " << live << "days" <<std::endl;
 
     
   //graph fill and output
@@ -506,26 +537,30 @@ int main(int argc, char** argv){
   h_q->GetXaxis()->SetRangeUser(0,dynamic_range*100);
   h_q->Draw();
 
-  TCanvas* c_rn = new TCanvas("c_radonrate","c_radonrate",600,800);
+  TCanvas* c_rn = new TCanvas("c_radonrate","c_radonrate",480,640);
   c_rn->Divide(1,2);
   c_rn->cd(1);
-  c_rn->DrawFrame(0,0,10,show_rate_max,"Rn Spectra;MeV;counts");
+  //  c_rn->DrawFrame(0,0,10,show_rate_max,"Rn Spectra;MeV;counts");
   h_po214->SetLineColor(kMagenta+1); 
   h_po214_sel->SetLineColor(kMagenta+1); 
   h_po214_sel->SetFillColor(kMagenta+1);
   h_po218->SetLineColor(kAzure+1);
   h_po218_sel->SetLineColor(kAzure+1);
   h_po218_sel->SetFillColor(kAzure+1);
-  h_poraw->Draw("hist same");
+  h_poraw->SetTitle("radon spectra");
+  h_poraw->GetXaxis()->SetTitle("MeV");
+
+  h_poraw->Draw();
   h_po214->Draw("hist same");
   h_po218->Draw("hist same");
   h_po214_sel->Draw("hist same");
   h_po218_sel->Draw("hist same");
   TLatex lat;
   lat.SetTextSize(0.04);
-  lat.DrawLatex(.5,0.9*show_rate_max,Form("DATA:%s",infile.c_str()));
-
-  lat.DrawLatex(0.5,0.8*show_rate_max,Form("DETECTOR:RD%d",det_id+1));
+  lat.DrawLatex(.5,0.9*h_poraw->GetMaximum(),Form("DATA: %s",infile.c_str()));
+  lat.DrawLatex(0.5,0.8*h_poraw->GetMaximum(),Form("DETECTOR: RD%d",det_id+1));
+  lat.DrawLatex(0.5,0.7*h_poraw->GetMaximum(),Form("cal_a: %.2lf",cal_a[det_id])); lat.DrawLatex(0.5,0.6*h_poraw->GetMaximum(),Form("negative veto: %.1lf V",veto_neg));
+  lat.DrawLatex(0.5,0.5*h_poraw->GetMaximum(),Form("live time: %.2f days",live));
   c_rn->cd(2);
   //  TCanvas* c_time = new TCanvas("c_time","c_time",800,600);
   //  c_time->DrawFrame(0,0,live,1000,"Rn Rate;time(day);counts/day");
@@ -571,6 +606,7 @@ int main(int argc, char** argv){
   TTree* info_tree = new TTree("info_tree","info_tree");
   double info_live,info_cal,info_po214_rate,info_po218_rate;
   TString info_infilename;
+
   info_tree->Branch("live",&info_live);
   info_tree->Branch("cal",&info_cal);
   info_tree->Branch("po214_rate",&info_po214_rate);
@@ -586,11 +622,12 @@ int main(int argc, char** argv){
   info_tree->Write();
   //c_vis->Write();
   c_rn->Write();
+  c_rn->Print(pngfilename);
   //  c_time->Write();
   out_file->Close();
 
   out_file_rate.open(ratefilename, std::ios::out);
-  out_file_rate<<po218_rate_sel<<"\t"<<po218_rate_sel_error<<"\t"<<po218_rate_sel<<"\t"<<po218_rate_sel_error<<std::endl;
+  out_file_rate<<po214_rate_sel<<"\t"<<po214_rate_sel_error<<"\t"<<po218_rate_sel<<"\t"<<po218_rate_sel_error<<"\t"<<live<<std::endl;
   out_file_rate.close();
   //for monitoring
   //  std::cerr<<(fill_po214_count+1)*tbin<<"\t"<<fill_po214_ev_count/tbin<<"\t"<<pow(fill_po214_ev_count,0.5)/tbin<<std::endl;sel_err
