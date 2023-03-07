@@ -114,8 +114,10 @@ int main(int argc, char* argv[])
 	//string fname = strfheader + ".dat";
 	string fname = strfheader;
 	string fconfname = strfheader + ".cnf";
+	string fratefname = strfheader + "_rate.dat";
 	printf("-------- SETTING CONFIGURE --------\n");
 	printf("RUN CONFIG FILE NAME   : %s\n",        fconfname.c_str());
+	printf("RATE FILE NAME   : %s\n",        fratefname.c_str());
 	printf("OUTPUT FILE NAME       : %s\n",        fname.c_str());
 	printf("SAMPLING RATE          : %.1lf (Hz)\n",sampling_rate);
 	printf("SAMPLING NUMBER        : %.0lf\n",     sampling_num);
@@ -126,6 +128,8 @@ int main(int argc, char* argv[])
 	printf("TRIGGER EDGE (R=0,F=1) : %d\n",        trig_edge);
 	printf("-----------------------------------\n");
 	FILE* fconf;
+	FILE* fratef;
+	fratef = fopen(fratefname.c_str(),"w");
 	fconf = fopen(fconfname.c_str(),"w");
 	fprintf(fconf,"---------- RUN CONFIGURE ----------\n");
 	fprintf(fconf,"RUN CONFIG FILE NAME   : %s\n",        fconfname.c_str());
@@ -144,6 +148,8 @@ int main(int argc, char* argv[])
 
 	int trigger_num = 0;
 	int subrun_num = 0;
+	int trigger_num_lastsubrun=0;
+	long time_lastsubrun=0;
 	gettimeofday(&tv,NULL);
 	fprintf(fconf,"RUN START : timestamp %ld.%06lu\n",tv.tv_sec,tv.tv_usec);
 	fflush(fconf);
@@ -156,7 +162,13 @@ int main(int argc, char* argv[])
 				gettimeofday(&tv,NULL);
 				fprintf(fconf,"SUBRUN%d END   : timestamp %ld.%06lu\n",subrun_num,tv.tv_sec,tv.tv_usec);
 				fflush(fconf);
-				printf("\nSUBRUN%d END   : timestamp %ld.%06lu\n",subrun_num,tv.tv_sec,tv.tv_usec);
+				//printf("\nSUBRUN%d END   : timestamp %ld.%06lu\n",subrun_num,tv.tv_sec,tv.tv_usec);
+				fprintf(fratef,"%d %ld %ld %d %d\n",subrun_num,time_lastsubrun,tv.tv_sec,trigger_num-trigger_num_lastsubrun);
+				fflush(fratef);
+				printf("\nSUBRUN %d %d events in %ld sec.\n",subrun_num,tv.tv_sec,tv.tv_sec-time_lastsubrun);
+				trigger_num_lastsubrun=trigger_num;
+				time_lastsubrun=tv.tv_sec;
+				
 				subrun_num++;
 			}
 			std::stringstream ss;
