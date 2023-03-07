@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 
 	if(argc!=11){
 		printf("./RD-daq outfileheader sub_entries sampling_rate(Hz) sampling_number dynamic_range_(0(+/-25V) or 1(+/-2.5V)) ch1_Vth(V)] ch2_Vth(V)] trigger_source_(0(ch1) or 1(ch2) or 2(or)) Trig_Edge_(RISE=0 or FALL=1) comment\n");
-		printf("ex) RD-daq out 1000 1000000 1024 2 0.1 0.1 2 0\n");
+		printf("ex) RD-daq out 1000 1000000 1024 2 0.1 0.1 2 0 comment\n");
 		return -1;
 	}
 	
