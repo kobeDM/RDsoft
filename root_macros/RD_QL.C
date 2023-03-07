@@ -12,13 +12,13 @@ void RD_QL(){
   int file_id[file_num][2];
   //filename[0]="/home/msgc/RD1/data/20230213/RD_0.dat";
   //filename[1]="/home/msgc/RD3/data/20230213/RD_0.dat";
-  filename_head[0]="/home/msgc/RD1/data/20230213/RD_";
-  filename_head[1]="/home/msgc/RD3/data/20230213/RD_";
+  filename_head[0]="/home/msgc/RD1/data/20230224_1/RD_";
+  filename_head[1]="/home/msgc/RD3/data/20230224/RD_";
   filename_ext="dat";
   file_id[0][0]=0;//from
-  file_id[0][1]=69;//to
+  file_id[0][1]=0;//to
   file_id[1][0]=0;
-  file_id[1][1]=51;
+  file_id[1][1]=14;
 
   //output
   //  string outputDir="test";
@@ -48,8 +48,8 @@ void RD_QL(){
   double cal_a[2],cal_b[2]; //MeV=a*mV+b
   //  cal_a[0]=1/200.;
   //cal_a[1]=1/105.;
-  cal_a[0]=4.80;
-  cal_a[1]=9.5;
+  cal_a[0]=7.5;
+  cal_a[1]=7.5;
   cal_b[0]=0;
   cal_b[1]=0;
   double bin_MeV=(spMmax-spMmin)/spMbin;
@@ -203,7 +203,7 @@ void RD_QL(){
     ifs.close();
     //file summary
     //    cerr<<"file name "<<i<<": "<<filename[i]<<endl;
-    cerr<<" "<<evtID-1<<" evetns";
+    cerr<<" "<<evtID-1<<" events"<<endl;
     //    cerr<<" ended at "<<end_time[i]<<endl;
     if(end_time[i]>start_time[i])live_time[i]=(end_time[i]-start_time[i])/3600./24;
     //    cerr<<" cumalative measuremnt time: "<<live_time[i]<<" days"<<" ("<<end_time[i]-start_time[i]<<"sec)"<<endl;
