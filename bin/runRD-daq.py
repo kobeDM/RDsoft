@@ -17,8 +17,8 @@ def parser():
     return(opts)
 
 print("###runRD-daq.py###")
-#print("\tinput possword for sudo command.")
-#passwd=(getpass.getpass()+'\n').encode()
+print("\tinput possword for sudo command.")
+passwd=(getpass.getpass()+'\n').encode()
 
 
 args = parser()
@@ -52,8 +52,8 @@ def runDAQ():
     #for adalm 
     #daq usage ./daq [outfileheader] [sub_entries] [sampling_rate(Hz)] [sampling_number] [dynamic range 0(+/-25V) or 1(+/-2.5V)] [ch1 Vth(V)] [ch2 Vth(V)] [trigger source 0(ch1) or 1(ch2) or 2(or)] [Trig Edge RISE=0 or FALL=1]
 
-    #cmd = ['sudo','-S', daq_cmd
-    cmd = [ daq_cmd
+    cmd = ['sudo','-S', daq_cmd
+    #cmd = [ daq_cmd
     ,file_name
     ,str(entries)
     ,str(frequency)
@@ -67,6 +67,7 @@ def runDAQ():
     ]
     #print_cmd(cmd)
     subprocess.run(cmd,input=passwd)
+    #subprocess.run(cmd)
 
 def print_cmd(cmd):
     for c in cmd:
