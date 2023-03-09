@@ -52,7 +52,8 @@ def runDAQ():
     #for adalm 
     #daq usage ./daq [outfileheader] [sub_entries] [sampling_rate(Hz)] [sampling_number] [dynamic range 0(+/-25V) or 1(+/-2.5V)] [ch1 Vth(V)] [ch2 Vth(V)] [trigger source 0(ch1) or 1(ch2) or 2(or)] [Trig Edge RISE=0 or FALL=1]
 
-    cmd = ['sudo','-S', daq_cmd
+    #cmd = ['sudo','-S', daq_cmd
+    cmd = [ daq_cmd
     ,file_name
     ,str(entries)
     ,str(frequency)
