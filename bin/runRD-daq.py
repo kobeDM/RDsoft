@@ -17,8 +17,8 @@ def parser():
     return(opts)
 
 print("###runRD-daq.py###")
-print("\tinput possword for sudo command.")
-passwd=(getpass.getpass()+'\n').encode()
+#print("\tinput possword for sudo command.")
+#passwd=(getpass.getpass()+'\n').encode()
 
 
 args = parser()
