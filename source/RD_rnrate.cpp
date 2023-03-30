@@ -56,7 +56,7 @@ int main(int argc, char** argv){
   while ((opt = getopt(argc, argv, "bv")) != -1) {
     switch (opt) {
     case 'b':
-      printf("-b option for batch mode\n");
+      //printf("-b option for batch mode\n");
       batch_switch=1;
       break;
     case 'v':
@@ -69,7 +69,7 @@ int main(int argc, char** argv){
     }
   }
 
-  std::cout<<"optind="<<optind<<std::endl;
+  if(verbose)std::cout<<"optind="<<optind<<std::endl;
 
   std::string infile = argv[1+optind-1];
   std::string outfile_tmp;
@@ -171,6 +171,7 @@ int main(int argc, char** argv){
 
   //Application
   TApplication app("app",&argc,argv);
+  if(verbose)
   std::cout << "--- application start ---" <<std::endl;
 
   //#################################
@@ -186,7 +187,7 @@ int main(int argc, char** argv){
 
   TFile* in_file = TFile::Open(infilename, "read");
   TTree* tree = (TTree*)in_file->Get("tree");
-  std::cout << "--- read input file ---" <<std::endl;
+  if(verbose)  std::cout << "--- read input file ---" <<std::endl;
   tree->SetBranchAddress("eventid",           &eventid);
   tree->SetBranchAddress("timestamp",         &timestamp);
   tree->SetBranchAddress("timestamp_usec",    &timestamp_usec);
@@ -216,8 +217,8 @@ int main(int argc, char** argv){
   h_wf->GetYaxis()->SetTitle("volt");
   TH1D* h_ene = new TH1D("h_ene","h_ene",spMbin,spMmin,spMmax);
   TH1D* h_poraw = new TH1D("h_poraw","h_poraw",spMbin,spMmin,spMmax); 
-  TH1D* h_po214 = new TH1D("h_po214_sel","h_po214_sel",spMbin,spMmin,spMmax);
-  TH1D* h_po218 = new TH1D("h_po218_sel","h_po218_sel",spMbin,spMmin,spMmax);
+  TH1D* h_po214 = new TH1D("h_po214","h_po214",spMbin,spMmin,spMmax);
+  TH1D* h_po218 = new TH1D("h_po218","h_po218",spMbin,spMmin,spMmax);
   TH1D* h_po214_sel = new TH1D("h_po214_sel","h_po214_sel",spMbin,spMmin,spMmax);
   TH1D* h_po218_sel = new TH1D("h_po218_sel","h_po218_sel",spMbin,spMmin,spMmax);
 
@@ -226,7 +227,7 @@ int main(int argc, char** argv){
   TGraphErrors* g_po218_rate = new TGraphErrors();
   g_po218_rate->SetName("g_po218_rate");
 
-  std::cout << "--- SET HISTOGRAMs ---" <<std::endl;
+    if(verbose)std::cout << "--- SET HISTOGRAMs ---" <<std::endl;
 
   //int inte_start_samp = 700;
   //int inte_end_samp = 2000;
@@ -282,7 +283,7 @@ int main(int argc, char** argv){
   for(int i;i<binmax;i++  ){
     po214_tdep[i]=po218_tdep[i]=0;
   }
-  std::cout << "--- loop start ---" <<std::endl;
+    if(verbose)std::cout << "--- loop start ---" <<std::endl;
   int ev_max=tree->GetEntries();
   //  for(int ev=0;ev<tree->GetEntries();ev++){
   for(int ev=0;ev<ev_max;ev++){
@@ -399,7 +400,8 @@ int main(int argc, char** argv){
     }
   }
   live = (ev_start_time - first_ev_time)/60/60/24; //days
-  std::cout <<std::endl<< "Live-time : " << live << "days" <<std::endl;
+  
+  if(verbose) std::cout <<std::endl<< "Live-time : " << live << "days" <<std::endl;
 
     
   //graph fill and output
@@ -463,7 +465,7 @@ int main(int argc, char** argv){
   //  ptext[6]->AddText(Form("PulseHeightVSAreaCut: Q>%.1lf*x+%.1lf",areaph_slope_upper,areaph_offset_upper));
   //ptext[7]->AddText(Form("PulseHeightVSAreaCut: Q<%.1lf*x+%.1lf",areaph_slope_lower,areaph_offset_lower));
   ptext[6]->AddText(Form("negative veto %.2lf V",veto_neg));
-  std::cout << "--- config panel set ---" <<std::endl;
+    if(verbose) std::cout << "--- config panel set ---" <<std::endl;
 
   // rn rate calc
     //  TH1D* h_poraw = new TH1D("h_poraw","h_poraw",spMbin,spMmin,spMmax);
@@ -549,6 +551,13 @@ int main(int argc, char** argv){
   h_po218_sel->SetFillColor(kAzure+1);
   h_poraw->SetTitle("radon spectra");
   h_poraw->GetXaxis()->SetTitle("MeV");
+  h_poraw->GetYaxis()->SetTitle("counts/MeV/day");
+  h_poraw->Scale(1./h_ene->GetBinWidth(1)/live);
+  h_po214->Scale(1./h_ene->GetBinWidth(1)/live);
+  h_po218->Scale(1./h_ene->GetBinWidth(1)/live);
+  h_po214_sel->Scale(1./h_ene->GetBinWidth(1)/live);
+  h_po218_sel->Scale(1./h_ene->GetBinWidth(1)/live);
+
 
   h_poraw->Draw();
   h_po214->Draw("hist same");
@@ -557,10 +566,11 @@ int main(int argc, char** argv){
   h_po218_sel->Draw("hist same");
   TLatex lat;
   lat.SetTextSize(0.04);
-  lat.DrawLatex(.5,0.9*h_poraw->GetMaximum(),Form("DATA: %s",infile.c_str()));
-  lat.DrawLatex(0.5,0.8*h_poraw->GetMaximum(),Form("DETECTOR: RD%d",det_id+1));
-  lat.DrawLatex(0.5,0.7*h_poraw->GetMaximum(),Form("cal_a: %.2lf",cal_a[det_id])); lat.DrawLatex(0.5,0.6*h_poraw->GetMaximum(),Form("negative veto: %.1lf V",veto_neg));
-  lat.DrawLatex(0.5,0.5*h_poraw->GetMaximum(),Form("live time: %.2f days",live));
+  float labelposx=spMmin+.05*(spMmax-spMmin);
+  lat.DrawLatex(labelposx,0.9*h_poraw->GetMaximum(),Form("DATA: %s",infile.c_str()));
+  lat.DrawLatex(labelposx,0.8*h_poraw->GetMaximum(),Form("DETECTOR: RD%d",det_id+1));
+  lat.DrawLatex(labelposx,0.7*h_poraw->GetMaximum(),Form("cal_a: %.2lf",cal_a[det_id])); lat.DrawLatex(labelposx,0.6*h_poraw->GetMaximum(),Form("negative veto: %.1lf V",veto_neg));
+  lat.DrawLatex(labelposx,0.5*h_poraw->GetMaximum(),Form("live time: %.2f days",live));
   c_rn->cd(2);
   //  TCanvas* c_time = new TCanvas("c_time","c_time",800,600);
   //  c_time->DrawFrame(0,0,live,1000,"Rn Rate;time(day);counts/day");
@@ -591,7 +601,7 @@ int main(int argc, char** argv){
   lat.DrawLatex(live*.15,0.5*show_rate_max,Form("214Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day",integ_win_start_in_days,integ_win_end_in_days,po214_rate_sel,po214_rate_sel_error));
   lat.DrawLatex(live*.15,0.4*show_rate_max,Form("218Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day",integ_win_start_in_days,integ_win_end_in_days,po218_rate_sel,po218_rate_sel_error)); 
 
-  std::cout << "--- file output ---" <<std::endl;
+    if(verbose) std::cout << "--- file output ---" <<std::endl;
   TFile* out_file = TFile::Open(outfilename, "RECREATE");
   //h_wf->Write();
   h_ph->Write();
