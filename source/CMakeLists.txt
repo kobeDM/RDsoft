@@ -2,12 +2,14 @@ cmake_minimum_required(VERSION 3.1.3)
 set (CMAKE_CXX_STANDARD 11)
 project(analog LANGUAGES CXX)
 
+set(Targets RD_dat2root)
+
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 list(APPEND CMAKE_MODULE_PATH $ENV{ROOTSYS}/etc/cmake)
 
 find_package(ROOT REQUIRED)
-#find_package(ROOT REQUIRED COMPONENTS RIO Net)
 include_directories(${ROOT_INCLUDE_DIRS})
+
 include(${ROOT_USE_FILE})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
@@ -26,8 +28,8 @@ endif()
 add_executable(RD-daq "RD-daq.cpp")
 add_executable(RD_dat2root "RD_dat2root.cpp")
 
-#target_link_libraries(RD-daq PRIVATE libm2k::libm2k)
-set(Targets RD_dat2root)
+target_link_libraries(RD-daq PRIVATE m2k)
+target_link_libraries(RD_dat2root PRIVATE ROOT::RIO ROOT::Net ROOT::Tree)
 
 set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/..)
 #install(TARGETS RD-daq DESTINATION bin)
