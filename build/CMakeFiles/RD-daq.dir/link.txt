@@ -1,1 +1,0 @@
-/opt/gcc/9.4.0/bin/g++   -std=c++11 -pipe -fsigned-char -pthread -rdynamic "CMakeFiles/RD-daq.dir/RD-daq.cpp.o" -o RD-daq   -L/opt/root/6.22.08/lib  -Wl,-rpath,/opt/root/6.22.08/lib -lm2k 
