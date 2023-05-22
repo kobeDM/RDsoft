@@ -16,7 +16,7 @@ $ mkdir build && cd build && cmake ../source && make && sudo make install
 ### run
 ```
 $ cd ~RD?/data (?=1 or 2 or 3)
-$runRD-daq.py & (daq runner, use with adalm) 
+$runRD-daq.py & (daq runner, use with adalm, run in BG from remote) 
 $RD-daqkiller.py (daq killer) 
 ```
 
