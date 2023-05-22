@@ -16,9 +16,11 @@ $ mkdir build && cd build && cmake ../source && make && sudo make install
 ### run
 ```
 $ cd ~RD?/data (?=1 or 2 or 3)
-$runRD-daq.py (daq runner, use with adalm) 
+$runRD-daq.py & (daq runner, use with adalm) 
+$RD-daqkiller.py (daq killer) 
 ```
 
 
 ## analysis
-
+$ cd ~RD?/ana (?=1 or 2 or 3)
+$runRD-ana.py (analysis runner) 
