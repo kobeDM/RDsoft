@@ -13,12 +13,11 @@ def parser():
     argparser=argparse.ArgumentParser()
     argparser.add_argument("-V","--Vth",type=float,default=0.1,help='[threhold (V)]')
     argparser.add_argument("-c","--comment", help="comment",default="comment")
+    argparser.add_argument("-S","--sudo", help="execute with sudo",action='store_true')
     opts=argparser.parse_args()
     return(opts)
 
 print("###runRD-daq.py###")
-print("\tinput password for sudo command.")
-passwd=(getpass.getpass()+'\n').encode()
 
 
 args = parser()
@@ -27,14 +26,17 @@ if(args.Vth!=None):
 else:
     trigger_level=0.1 #V        
 comment=args.comment
-    
+
 #commands
 HOME=os.environ['HOME']+'/'
 backup_cmd=HOME+'RDsoft/bin/runRD-backup.py'
 daq_cmd=HOME+'RDsoft/bin/RD-daq'
 
-
-    
+if args.sudo:
+    print("\tinput password for sudo command.")
+    passwd=(getpass.getpass()+'\n').encode()
+     
+#print("DAQ command:"+daq_cmd)
 def runDAQ():
     #daq params
     fileheader="sub"
@@ -52,9 +54,12 @@ def runDAQ():
     #for adalm 
     #daq usage ./daq [outfileheader] [sub_entries] [sampling_rate(Hz)] [sampling_number] [dynamic range 0(+/-25V) or 1(+/-2.5V)] [ch1 Vth(V)] [ch2 Vth(V)] [trigger source 0(ch1) or 1(ch2) or 2(or)] [Trig Edge RISE=0 or FALL=1]
 
-    cmd = ['sudo','-S', daq_cmd
-    #cmd = [ daq_cmd
-    ,file_name
+    if args.sudo:
+        cmd = ['sudo','-S', daq_cmd]
+    else:
+        cmd = ['nohup', daq_cmd]
+    cmd.extend([
+    file_name
     ,str(entries)
     ,str(frequency)
     ,str(sample_num)
@@ -64,9 +69,12 @@ def runDAQ():
     ,str(trigger_source)
     ,str(trigger_type)
     ,comment       
-    ]
+    ])
     #print_cmd(cmd)
-    subprocess.run(cmd,input=passwd)
+    if args.sudo:
+        subprocess.run(cmd,input=passwd)
+    else:
+        subprocess.run(cmd)
     #subprocess.run(cmd)
 
 def print_cmd(cmd):
