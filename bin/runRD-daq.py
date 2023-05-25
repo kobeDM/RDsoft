@@ -57,7 +57,8 @@ def runDAQ():
     if args.sudo:
         cmd = ['sudo','-S', daq_cmd]
     else:
-        cmd = ['nohup', daq_cmd]
+        #cmd = ['nohup', daq_cmd]
+        cmd = [daq_cmd]
     cmd.extend([
     file_name
     ,str(entries)
