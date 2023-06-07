@@ -2,7 +2,9 @@
 
 import subprocess
 import time
-cmd="/home/msgc/RDsoft/bin/RD-backup.py"
+
+RDSW=os.environ['RDSW']+'/'
+cmd=RDSW+"bin/RD-backup.py"
 interval=60
 while 1:
     #    print(exe)
