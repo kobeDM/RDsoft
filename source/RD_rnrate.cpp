@@ -35,6 +35,7 @@
 #include "TBox.h"
 #include "TLatex.h"
 #include "TString.h"
+#include "TLine.h"
 //USER
 
 //#define ADC_BIT 1024 //10bit

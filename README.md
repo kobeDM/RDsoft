@@ -21,14 +21,14 @@ $ mkdir build && cd build && cmake ../source && make && make install
 ```
 $ cd ~RD?/data (?=1 or 2 or 3)
 $ runRD-daq.py (daq runner, use with adalm) 
+$ runRD-daq.py & (daq runner, use with adalm, run in BG from remote) 
+$ RD-daqkiller.py (daq killer) 
 ```
 
 
 ## analysis
-
 Here quick analysis will be performed by: 
 ```
 $ cd ~RD?/data (?=1 or 2 or 3)
-$ runRD-ana.py
+$ runRD-ana.py (analysis runner) 
 ```
-
