@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import subprocess
+import subprocess,os
 import time
 
 RDSW=os.environ['RDSW']+'/'
