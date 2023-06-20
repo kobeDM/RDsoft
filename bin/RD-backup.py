@@ -3,7 +3,7 @@
 import subprocess, os,sys
 
 dirs_from=['/home/msgc/RD?']
-dirs_to=['/nadb/nadb41/msgc','/nadb/nadb57/msgc']
+dirs_to=['/nadb/nadb41/msgc','/nadb/nadb57/msgc','/nadb/nadb65/RD'] 
 
 for dir_from in dirs_from:
     for dir_to in dirs_to:
