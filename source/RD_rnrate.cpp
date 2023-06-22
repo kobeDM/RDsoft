@@ -484,26 +484,10 @@ int main(int argc, char** argv){
   ptext[6]->AddText(Form("negative veto %.2lf V",veto_neg));
     if(verbose) std::cout << "--- config panel set ---" <<std::endl;
 
-  // rn rate calc
-    //  TH1D* h_poraw = new TH1D("h_poraw","h_poraw",spMbin,spMmin,spMmax);
-  //  TH1D* h_po214 = new TH1D("h_po214","h_po214",spMbin,spMmin,spMmax);
-  // TH1D* h_po218 = new TH1D("h_po218","h_po218",spMbin,spMmin,spMmax);
-  //  for(int i=0;i<h_ph->GetNbinsX();i++){
+
   for(int i=0;i<h_ene->GetNbinsX();i++){
     E = h_ene->GetBinCenter(i);
     int counts = h_ene->GetBinContent(i);
-    //if(ene_Po218*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po218*(1+ene_win_upper*ene_reso/100)){
-	//   if(Po_energy[0]-Po_energy[0]*3*ene_reso/100<x_val&&x_val<Po_energy[0]+Po_energy[0]*0*ene_reso/100){
-      //for(int j=0;j<counts;j++){
-	//        h_po218->Fill(E);
-	// }
-      //}
-    //      if(ene_Po214*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po214*(1+ene_win_upper*ene_reso/100)){
-	//    if(Po_energy[1]-Po_energy[1]*3*ene_reso/100<x_val&&x_val<Po_energy[1]+Po_energy[1]*0*ene_reso/100){
-    //for(int j=0;j<counts;j++){
-	//        h_po214->Fill(E);
-    // }
-    // }
     for(int j=0;j<counts;j++){
       h_poraw->Fill(E);
     }
