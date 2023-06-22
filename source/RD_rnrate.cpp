@@ -133,12 +133,17 @@ int main(int argc, char** argv){
   int spMbin=pt.get<int>("view.show_sp_bin_MeV");
   double spMmax=pt.get<double>("view.show_sp_max_MeV");
   double spMmin=pt.get<double>("view.show_sp_min_MeV");
+  ULong64_t runstarttime=pt.get<double>("DAQ.RUN START");
 
+  
+  
   if(verbose){
   std::cout << "Dynamic Range         : " << dynamic_range <<std::endl;
   std::cout << "Sampling Rate         : " << sampling_hertz <<std::endl;
   std::cout << "Sampling Number         : " << sampling_number <<std::endl;
   std::cout << "Calibration Factor    : " << cal_a[det_id] <<std::endl;
+  std::cout << "run start    : " << runstarttime <<std::endl;
+  
   }
   double tbin=time_win_hour/24.; //days
   TString filename;
@@ -269,7 +274,7 @@ int main(int argc, char** argv){
   int po218_tdep[binmax];
   int po214_time[binmax];
   int po218_time[binmax];
-  double first_ev_time;
+  ULong64_t first_ev_time;
   time_t t_temp;
   int vetocut=1;
   int veto;
@@ -281,8 +286,9 @@ int main(int argc, char** argv){
    double Eth_MeV=2.0;
 
   struct tm *ptm;
-  for(int i;i<binmax;i++  ){
+  for(int i=0;i<binmax;i++  ){
     po214_tdep[i]=po218_tdep[i]=0;
+    //    std::cout <<i<<"\t"<<po218_tdep[i]<<"\t"<<po214_tdep[i]<<std::endl;    
   }
     if(verbose)std::cout << "--- loop start ---" <<std::endl;
   int ev_max=tree->GetEntries();
@@ -295,6 +301,10 @@ int main(int argc, char** argv){
     //live time calc
     if(ev==0){
       first_ev_time = timestamp;
+      if(verbose){
+	std::cout << "first_ev_time: " <<first_ev_time<<std::endl;
+	std::cout << "runstarttime: " <<runstarttime<<std::endl;
+      }
       ev_start_time = timestamp;
       ev_end_time   = timestamp_end;
       dead_time += timestamp*1e6 + timestamp_usec - (timestamp_end*1e6 + timestamp_usec_end);
@@ -327,7 +337,7 @@ int main(int argc, char** argv){
     }
     h_ph_nc->Fill(volt_max-offset);
     if(veto==0){//||!vetocut){
-      thisbin=int((timestamp-first_ev_time)/60/60/24/tbin);
+      thisbin=int((timestamp-runstarttime)/60./60/24/tbin);
 	h_ph->Fill(volt_max-offset);
 	h_q->Fill(charge);
 	h_ph_q->Fill(volt_max-offset,charge);
@@ -338,26 +348,26 @@ int main(int argc, char** argv){
 	    po218_tdep[thisbin]++;
 	    po218_time[thisbin]=timestamp;
 	    if(verbose){
-	      std::cout <<"Po218\t"<<thisbin<<"\t"<<E<<"\t"<<timestamp<<"\t"<<first_ev_time<<std::endl;
+	      std::cout <<"Po218\t"<<thisbin<<"\t"<<E<<"\t"<<po218_tdep[thisbin]<<"\t"<<timestamp<<"\t"<<runstarttime<<"\t"<<timestamp-runstarttime<<std::endl;
 	    }
 	  }
-	  if((timestamp-first_ev_time)/60/60/24>integ_win_start_in_days&&(timestamp-first_ev_time)/60/60/24<integ_win_end_in_days){
+	  if((timestamp-runstarttime)/60./60/24>integ_win_start_in_days&&(timestamp-runstarttime)/60./60/24<integ_win_end_in_days){
 	    h_po218_sel->Fill(E);
 	  }
 	}
 	if(ene_Po214*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po214*(1+ene_win_upper*ene_reso/100)){
 	  h_po214->Fill(E);
    if(ene_Po214*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po214*(1+ene_win_upper*ene_reso/100)){
-	//thisbin=int((timestamp-first_ev_time)/60/60/24/tbin);
+	//thisbin=int((timestamp-runstarttime)/60/60/24/tbin);
       if(thisbin>-1&&thisbin<binmax){
 	po214_tdep[thisbin]++;
 	po214_time[thisbin]=timestamp;
 	if(verbose){
-	  std::cout <<"Po214\t"<<thisbin<<"\t"<<E<<"\t"<<timestamp<<"\t"<<first_ev_time<<std::endl;
+	  std::cout <<"Po214\t"<<thisbin<<"\t"<<E<<"\t"<<timestamp<<"\t"<<runstarttime<<std::endl;
 	   }
       }
 
-	  if((timestamp-first_ev_time)/60/60/24>integ_win_start_in_days&&(timestamp-first_ev_time)/60/60/24<integ_win_end_in_days){
+	  if((timestamp-runstarttime)/60./60/24>integ_win_start_in_days&&(timestamp-runstarttime)/60./60/24<integ_win_end_in_days){
 	  h_po214_sel->Fill(E);
 	  }
 	}
@@ -373,7 +383,7 @@ int main(int argc, char** argv){
     }
     cut_after_time = ev_end_time;
     if(ev%10000==0)   std::cout << "Ev." << ev  <<"/"<<ev_max<< " | Rate : " << std::setprecision(10) << rate <<"\t\t\r"<<std::flush; 
-    // thisbin=int((timestamp-first_ev_time)/60/60/24/tbin);
+    // thisbin=int((timestamp-runstarttime)/60/60/24/tbin);
       
     if(ene_Po218*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po218*(1+ene_win_upper*ene_reso/100)){
       //po218
@@ -381,7 +391,7 @@ int main(int argc, char** argv){
 	po218_tdep[thisbin]++;
 	po218_time[thisbin]=timestamp;
 	if(verbose){
-	  std::cout <<"Po218\t"<<thisbin<<"\t"<<E<<"\t"<<timestamp<<"\t"<<first_ev_time<<std::endl;
+	  std::cout <<"Po218\t"<<thisbin<<"\t"<<E<<"\t"<<timestamp<<"\t"<<runstarttime<<std::endl;
 	   }
 	   }**/
     }
@@ -389,20 +399,21 @@ int main(int argc, char** argv){
 
     //po214
     /**      if(ene_Po214*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po214*(1+ene_win_upper*ene_reso/100)){
-	//thisbin=int((timestamp-first_ev_time)/60/60/24/tbin);
+	//thisbin=int((timestamp-runstarttime)/60/60/24/tbin);
       if(thisbin>-1&&thisbin<binmax){
 	po214_tdep[thisbin]++;
 	po214_time[thisbin]=timestamp;
 	if(verbose){
-	  std::cout <<"Po214\t"<<thisbin<<"\t"<<E<<"\t"<<timestamp<<"\t"<<first_ev_time<<std::endl;
+	  std::cout <<"Po214\t"<<thisbin<<"\t"<<E<<"\t"<<timestamp<<"\t"<<runstarttime<<std::endl;
 	   }
 	   }**/
 
     }
   }
-  live = (ev_start_time - first_ev_time)/60/60/24; //days
+  live = (ev_start_time - runstarttime)/60./60/24; //days
   
-  if(verbose) std::cout <<std::endl<< "Live-time : " << live << "days" <<std::endl;
+  if(verbose) std::cout <<std::endl<< "Live time : " << live << "days" <<std::endl;
+  if(verbose) std::cout << "time bin : " << tbin << "days" <<std::endl;
 
     
   //graph fill and output
@@ -412,6 +423,9 @@ int main(int argc, char** argv){
     g_po218_rate->SetPoint(i,(i+0.5)*tbin,po218_tdep[i]/tbin);
     g_po218_rate->SetPointError(i,tbin/2,pow(po218_tdep[i],0.5)/tbin);
   
+    if(verbose) {
+      std::cout <<"bin" <<i<<"\t"<< po214_tdep[i]/tbin<<"\t"<<po218_tdep[i]/tbin<<std::endl;
+    }
     t_temp=po214_time[i];
     ptm=localtime(&t_temp);
     strftime(tmpc[0],sizeof(tmpc[0]), "%Y%m%d_po214.dat", ptm);
