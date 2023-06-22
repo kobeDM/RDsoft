@@ -32,3 +32,9 @@ Here quick analysis will be performed by:
 $ cd ~RD?/data (?=1 or 2 or 3)
 $ runRD-ana.py (analysis runner) 
 ```
+## analysis including influxdb update
+Grafana monitoring will be performed by: 
+```
+$ cd ~status/radon
+$ nhup runRD-mon.py &(monitoring runner including auto analysis) 
+```
