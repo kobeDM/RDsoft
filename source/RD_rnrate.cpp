@@ -426,7 +426,8 @@ int main(int argc, char** argv){
     if(verbose) {
       std::cout <<"bin" <<i<<"\t"<< po214_tdep[i]/tbin<<"\t"<<po218_tdep[i]/tbin<<std::endl;
     }
-    t_temp=po214_time[i];
+    //t_temp=po214_time[i];
+    t_temp=runstarttime+(i+0.5)*tbin;
     ptm=localtime(&t_temp);
     strftime(tmpc[0],sizeof(tmpc[0]), "%Y%m%d_po214.dat", ptm);
     strftime(tmpc[1],sizeof(tmpc[1]), "%Y/%m/%d/%H:%M:%S", ptm);
@@ -444,7 +445,8 @@ int main(int argc, char** argv){
     }
     out_file_214<<tmpc[1]<<" "<<std::fixed<<std::setprecision(2)<<po214_tdep[i]/tbin<<" "<<pow(po214_tdep[i],0.5)/tbin<<std::endl;
 
-    t_temp=po218_time[i];
+    //t_temp=po218_time[i];
+    t_temp=runstarttime+(i+0.5)*tbin;
     ptm=localtime(&t_temp);
     strftime(tmpc[0],sizeof(tmpc[0]), "%Y%m%d_po218.dat", ptm);
     strftime(tmpc[1],sizeof(tmpc[1]), "%Y/%m/%d/%H:%M:%S", ptm);
