@@ -101,6 +101,7 @@ int main(int argc, char** argv){
 
   double ene_Po218=pt.get<double>("ana.ene_Po218");
   double ene_Po214=pt.get<double>("ana.ene_Po214");
+  double ene_Po212=pt.get<double>("ana.ene_Po212");
   double ene_reso=pt.get<double>("ana.ene_reso");// = 2.5; //%
   double ene_win_upper=pt.get<double>("ana.ene_win_upper");
   double ene_win_lower=pt.get<double>("ana.ene_win_lower");
@@ -153,9 +154,10 @@ int main(int argc, char** argv){
   TString outfilename = filename + "_vis.root";
   //  TString mondir="/nadb41/status/radon/RD2/";
   std::string mondir="rnmon/";
-  TString monfilename_214,monfilename_218;
+  TString monfilename_214,monfilename_218,monfilename_212;
   TString monfilename_last_214="0";
   TString monfilename_last_218="0";
+  TString monfilename_last_212="0";
   pos = outfile_tmp.find("/root");
   filename = outfile_tmp.substr(0,pos);
   //std::string 
@@ -171,6 +173,7 @@ int main(int argc, char** argv){
   std::ofstream out_file_rate;
   std::ofstream out_file_218;
   std::ofstream out_file_214;
+  std::ofstream out_file_212;
 
 
   //  std::cout << "--- set output filename : " << outfilename<<std::endl;
@@ -223,11 +226,15 @@ int main(int argc, char** argv){
   h_wf->GetYaxis()->SetTitle("volt");
   TH1D* h_ene = new TH1D("h_ene","h_ene",spMbin,spMmin,spMmax);
   TH1D* h_poraw = new TH1D("h_poraw","h_poraw",spMbin,spMmin,spMmax); 
+  TH1D* h_po212 = new TH1D("h_po212","h_po212",spMbin,spMmin,spMmax); 
   TH1D* h_po214 = new TH1D("h_po214","h_po214",spMbin,spMmin,spMmax);
   TH1D* h_po218 = new TH1D("h_po218","h_po218",spMbin,spMmin,spMmax);
+  TH1D* h_po212_sel = new TH1D("h_po212_sel","h_po212_sel",spMbin,spMmin,spMmax);
   TH1D* h_po214_sel = new TH1D("h_po214_sel","h_po214_sel",spMbin,spMmin,spMmax);
   TH1D* h_po218_sel = new TH1D("h_po218_sel","h_po218_sel",spMbin,spMmin,spMmax);
 
+  TGraphErrors* g_po212_rate = new TGraphErrors();
+  g_po212_rate->SetName("g_po212_rate");
   TGraphErrors* g_po214_rate = new TGraphErrors();
   g_po214_rate->SetName("g_po214_rate");
   TGraphErrors* g_po218_rate = new TGraphErrors();
@@ -270,10 +277,17 @@ int main(int argc, char** argv){
   int fill_po218_ev_count=0;
   int fill_po218_count=0;
   int fill_po218_flag=0;
+  double po212_ev_time;
+  int count_po212_ev=0;
+  int fill_po212_ev_count=0;
+  int fill_po212_count=0;
+  int fill_po212_flag=0;
   int po214_tdep[binmax];
   int po218_tdep[binmax];
+  int po212_tdep[binmax];
   int po214_time[binmax];
   int po218_time[binmax];
+  int po212_time[binmax];
   ULong64_t first_ev_time;
   time_t t_temp;
   int vetocut=1;
@@ -287,8 +301,7 @@ int main(int argc, char** argv){
 
   struct tm *ptm;
   for(int i=0;i<binmax;i++  ){
-    po214_tdep[i]=po218_tdep[i]=0;
-    //    std::cout <<i<<"\t"<<po218_tdep[i]<<"\t"<<po214_tdep[i]<<std::endl;    
+    po214_tdep[i]=po218_tdep[i]=po212_tdep[i]=0;
   }
     if(verbose)std::cout << "--- loop start ---" <<std::endl;
   int ev_max=tree->GetEntries();
@@ -355,6 +368,21 @@ int main(int argc, char** argv){
 	    h_po218_sel->Fill(E);
 	  }
 	}
+	//po212
+	if(ene_Po212*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po212*(1+ene_win_upper*ene_reso/100)){
+	  h_po212->Fill(E);
+	  if(thisbin>-1&&thisbin<binmax){
+	    po212_tdep[thisbin]++;
+	    po212_time[thisbin]=timestamp;
+	    if(verbose){
+	      std::cout <<"Po212\t"<<thisbin<<"\t"<<E<<"\t"<<po212_tdep[thisbin]<<"\t"<<timestamp<<"\t"<<runstarttime<<"\t"<<timestamp-runstarttime<<std::endl;
+	    }
+	  }
+	  if((timestamp-runstarttime)/60./60/24>integ_win_start_in_days&&(timestamp-runstarttime)/60./60/24<integ_win_end_in_days){
+	    h_po212_sel->Fill(E);
+	  }
+	}
+	//Po214
 	if(ene_Po214*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po214*(1+ene_win_upper*ene_reso/100)){
 	  h_po214->Fill(E);
    if(ene_Po214*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po214*(1+ene_win_upper*ene_reso/100)){
@@ -366,8 +394,7 @@ int main(int argc, char** argv){
 	  std::cout <<"Po214\t"<<thisbin<<"\t"<<E<<"\t"<<timestamp<<"\t"<<runstarttime<<std::endl;
 	   }
       }
-
-	  if((timestamp-runstarttime)/60./60/24>integ_win_start_in_days&&(timestamp-runstarttime)/60./60/24<integ_win_end_in_days){
+      if((timestamp-runstarttime)/60./60/24>integ_win_start_in_days&&(timestamp-runstarttime)/60./60/24<integ_win_end_in_days){
 	  h_po214_sel->Fill(E);
 	  }
 	}
@@ -386,7 +413,7 @@ int main(int argc, char** argv){
     // thisbin=int((timestamp-runstarttime)/60/60/24/tbin);
       
     if(ene_Po218*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po218*(1+ene_win_upper*ene_reso/100)){
-      //po218
+
       /** if(thisbin>-1&&thisbin<binmax){
 	po218_tdep[thisbin]++;
 	po218_time[thisbin]=timestamp;
@@ -396,18 +423,6 @@ int main(int argc, char** argv){
 	   }**/
     }
     //    std::cout <<std::endl; 
-
-    //po214
-    /**      if(ene_Po214*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po214*(1+ene_win_upper*ene_reso/100)){
-	//thisbin=int((timestamp-runstarttime)/60/60/24/tbin);
-      if(thisbin>-1&&thisbin<binmax){
-	po214_tdep[thisbin]++;
-	po214_time[thisbin]=timestamp;
-	if(verbose){
-	  std::cout <<"Po214\t"<<thisbin<<"\t"<<E<<"\t"<<timestamp<<"\t"<<runstarttime<<std::endl;
-	   }
-	   }**/
-
     }
   }
   live = (ev_start_time - runstarttime)/60./60/24; //days
@@ -418,24 +433,41 @@ int main(int argc, char** argv){
     
   //graph fill and output
   for(int i=0;i<live/tbin;i++){
+    g_po212_rate->SetPoint(i,(i+0.5)*tbin,po212_tdep[i]/tbin);
+    g_po212_rate->SetPointError(i,tbin/2,pow(po212_tdep[i],0.5)/tbin);
     g_po214_rate->SetPoint(i,(i+0.5)*tbin,po214_tdep[i]/tbin);
     g_po214_rate->SetPointError(i,tbin/2,pow(po214_tdep[i],0.5)/tbin);
     g_po218_rate->SetPoint(i,(i+0.5)*tbin,po218_tdep[i]/tbin);
     g_po218_rate->SetPointError(i,tbin/2,pow(po218_tdep[i],0.5)/tbin);
   
     if(verbose) {
-      std::cout <<"bin" <<i<<"\t"<< po214_tdep[i]/tbin<<"\t"<<po218_tdep[i]/tbin<<std::endl;
+      std::cout <<"bin" <<i<<"\t"<< po212_tdep[i]/tbin<<"\t"<< po214_tdep[i]/tbin<<"\t"<<po218_tdep[i]/tbin<<std::endl;
     }
-    //t_temp=po214_time[i];
+
     t_temp=runstarttime+(i+0.5)*tbin*60*60*24;
     ptm=localtime(&t_temp);
-    strftime(tmpc[0],sizeof(tmpc[0]), "%Y%m%d_po214.dat", ptm);
     strftime(tmpc[1],sizeof(tmpc[1]), "%Y/%m/%d/%H:%M:%S", ptm);
     strftime(tmpc[2],sizeof(tmpc[2]), "rnmon/%Y/",ptm);
     mondir=tmpc[2];
-    //    std::cerr<<"mondir: "<<mondir<<std::endl;
 
+    //output Po212
+    strftime(tmpc[0],sizeof(tmpc[0]), "%Y%m%d_po212.dat", ptm);
+    monfilename_212=tmpc[0];
+    monfilename_212=mondir+monfilename_212;
+    if(monfilename_212!=monfilename_last_212){
+      out_file_212.close();
+      monfilename_last_214=monfilename_212;
+      out_file_212.open(monfilename_212, std::ios::out);
+    }
+    out_file_212<<tmpc[1]<<" "<<std::fixed<<std::setprecision(2)<<po212_tdep[i]/tbin<<" "<<pow(po212_tdep[i],0.5)/tbin<<std::endl;
 
+    //output Po214
+    //t_temp=runstarttime+(i+0.5)*tbin*60*60*24;
+    //ptm=localtime(&t_temp);
+    strftime(tmpc[0],sizeof(tmpc[0]), "%Y%m%d_po214.dat", ptm);
+    //    strftime(tmpc[1],sizeof(tmpc[1]), "%Y/%m/%d/%H:%M:%S", ptm);
+    //strftime(tmpc[2],sizeof(tmpc[2]), "rnmon/%Y/",ptm);
+    //mondir=tmpc[2];
     monfilename_214=tmpc[0];
     monfilename_214=mondir+monfilename_214;
     if(monfilename_214!=monfilename_last_214){
@@ -445,11 +477,12 @@ int main(int argc, char** argv){
     }
     out_file_214<<tmpc[1]<<" "<<std::fixed<<std::setprecision(2)<<po214_tdep[i]/tbin<<" "<<pow(po214_tdep[i],0.5)/tbin<<std::endl;
 
-    //t_temp=po218_time[i];
-    t_temp=runstarttime+(i+0.5)*tbin*60*60*24;
-    ptm=localtime(&t_temp);
+    //output Po218
+    //t_temp=runstarttime+(i+0.5)*tbin*60*60*24;
+    //ptm=localtime(&t_temp);
     strftime(tmpc[0],sizeof(tmpc[0]), "%Y%m%d_po218.dat", ptm);
-    strftime(tmpc[1],sizeof(tmpc[1]), "%Y/%m/%d/%H:%M:%S", ptm);
+    //strftime(tmpc[1],sizeof(tmpc[1]), "%Y/%m/%d/%H:%M:%S", ptm);
+    
     monfilename_218=tmpc[0];
     monfilename_218=mondir+monfilename_218;
     if(monfilename_218!=monfilename_last_218){
@@ -474,14 +507,10 @@ int main(int argc, char** argv){
   ptext[0]->AddText("config");
   ptext[1]->AddText(Form("DATA: %s",infile.c_str()));
   ptext[2]->AddText(Form("DETECTOR: RD%d",det_id+1));
-  // ptext[3]->AddText(Form("Sampling: %.1lf(Hz)",sampling_hertz));
-  //ptext[4]->AddText(Form("DynamicRange: %.1lf(V)",dynamic_range));
   ptext[3]->AddText(Form("cal_a: %.1lf(MeV/V)",cal_a[det_id]));
   ptext[4]->AddText(Form("cal_b: %.1lf(MeV)",cal_b[det_id]));
   ptext[5]->AddText(Form("Live-time: %lf(days)",live));
-  //  ptext[6]->AddText(Form("PulseHeightVSAreaCut: Q>%.1lf*x+%.1lf",areaph_slope_upper,areaph_offset_upper));
-  //ptext[7]->AddText(Form("PulseHeightVSAreaCut: Q<%.1lf*x+%.1lf",areaph_slope_lower,areaph_offset_lower));
-  ptext[6]->AddText(Form("negative veto %.2lf V",veto_neg));
+    ptext[6]->AddText(Form("negative veto %.2lf V",veto_neg));
     if(verbose) std::cout << "--- config panel set ---" <<std::endl;
 
 
@@ -492,14 +521,19 @@ int main(int argc, char** argv){
       h_poraw->Fill(E);
     }
   }
+  std::cerr<<h_po212->Integral()<<" "<<live<<std::endl;
   std::cerr<<h_po214->Integral()<<" "<<live<<std::endl;
   std::cerr<<h_po218->Integral()<<" "<<live<<std::endl;
+  double po212_rate = double(h_po212->Integral())/live;
   double po214_rate = double(h_po214->Integral())/live;
   double po218_rate = double(h_po218->Integral())/live;
+  double po212_rate_sel = double(h_po212_sel->Integral())/(integ_win_end_in_days-integ_win_start_in_days);
   double po214_rate_sel = double(h_po214_sel->Integral())/(integ_win_end_in_days-integ_win_start_in_days);
   double po218_rate_sel = double(h_po218_sel->Integral())/(integ_win_end_in_days-integ_win_start_in_days);
+  double po212_rate_error = sqrt(double(h_po212->Integral()))/live;
   double po214_rate_error = sqrt(double(h_po214->Integral()))/live;
   double po218_rate_error = sqrt(double(h_po218->Integral()))/live;
+  double po212_rate_sel_error = sqrt(double(h_po212_sel->Integral()))/(integ_win_end_in_days-integ_win_start_in_days);
   double po214_rate_sel_error = sqrt(double(h_po214_sel->Integral()))/(integ_win_end_in_days-integ_win_start_in_days);
   double po218_rate_sel_error = sqrt(double(h_po218_sel->Integral()))/(integ_win_end_in_days-integ_win_start_in_days);
 
@@ -544,6 +578,9 @@ int main(int argc, char** argv){
   c_rn->Divide(1,2);
   c_rn->cd(1);
   //  c_rn->DrawFrame(0,0,10,show_rate_max,"Rn Spectra;MeV;counts");
+  h_po212->SetLineColor(kGreen+1); 
+  h_po212_sel->SetLineColor(kGreen+1); 
+  h_po212_sel->SetFillColor(kGreen+1);
   h_po214->SetLineColor(kMagenta+1); 
   h_po214_sel->SetLineColor(kMagenta+1); 
   h_po214_sel->SetFillColor(kMagenta+1);
@@ -554,15 +591,19 @@ int main(int argc, char** argv){
   h_poraw->GetXaxis()->SetTitle("MeV");
   h_poraw->GetYaxis()->SetTitle("counts/MeV/day");
   h_poraw->Scale(1./h_ene->GetBinWidth(1)/live);
+  h_po212->Scale(1./h_ene->GetBinWidth(1)/live);
   h_po214->Scale(1./h_ene->GetBinWidth(1)/live);
   h_po218->Scale(1./h_ene->GetBinWidth(1)/live);
+  h_po212_sel->Scale(1./h_ene->GetBinWidth(1)/live);
   h_po214_sel->Scale(1./h_ene->GetBinWidth(1)/live);
   h_po218_sel->Scale(1./h_ene->GetBinWidth(1)/live);
 
 
   h_poraw->Draw();
+  h_po212->Draw("hist same");
   h_po214->Draw("hist same");
   h_po218->Draw("hist same");
+  h_po212_sel->Draw("hist same");
   h_po214_sel->Draw("hist same");
   h_po218_sel->Draw("hist same");
   TLatex lat;
@@ -573,34 +614,42 @@ int main(int argc, char** argv){
   lat.DrawLatex(labelposx,0.7*h_poraw->GetMaximum(),Form("cal_a: %.2lf",cal_a[det_id])); lat.DrawLatex(labelposx,0.6*h_poraw->GetMaximum(),Form("negative veto: %.1lf V",veto_neg));
   lat.DrawLatex(labelposx,0.5*h_poraw->GetMaximum(),Form("live time: %.2f days",live));
   c_rn->cd(2);
-  //  TCanvas* c_time = new TCanvas("c_time","c_time",800,600);
-  //  c_time->DrawFrame(0,0,live,1000,"Rn Rate;time(day);counts/day");
+
   c_rn->DrawFrame(0,0,live*1.1,show_rate_max,"Rn Rate;time(day);counts/day");
+  g_po212_rate->SetLineColor(kGreen+1);
+  g_po212_rate->SetLineWidth(2);
+  g_po212_rate->SetMarkerStyle(8);
+  g_po212_rate->SetMarkerSize(1.2);
   g_po214_rate->SetLineColor(kMagenta+1);
   g_po214_rate->SetLineWidth(2);
   g_po214_rate->SetMarkerStyle(8);
   g_po214_rate->SetMarkerSize(1.2);
   //  g_po214_rate->SetMarkerColor(15);
+  g_po212_rate->SetMarkerColor(kGreen+1);
   g_po214_rate->SetMarkerColor(kMagenta+1);
   g_po218_rate->SetLineColor(kAzure+1);
   g_po218_rate->SetMarkerColor(kAzure+1);
   g_po218_rate->SetMarkerSize(1);
   g_po218_rate->SetLineWidth(2);
   g_po218_rate->SetMarkerStyle(8);
+  g_po212_rate->Draw("p same");
   g_po214_rate->Draw("p same");
   g_po218_rate->Draw("p same");
   TLegend* leg_rate = new TLegend(0.7,0.7,0.85,0.85);
+  leg_rate->AddEntry(g_po212_rate,"212Po+ rate","pl");
   leg_rate->AddEntry(g_po214_rate,"214Po+ rate","pl");
   leg_rate->AddEntry(g_po218_rate,"218Po+ rate","pl");
   leg_rate->Draw();
 
-  lat.DrawLatex(live*.1,0.9*show_rate_max,Form("DATA:%s",infile.c_str()));
-  lat.DrawLatex(live*.1,0.8*show_rate_max,Form("DETECTOR:RD%d",det_id+1));
+  lat.DrawLatex(live*.1,0.94*show_rate_max,Form("DATA:%s",infile.c_str()));
+  lat.DrawLatex(live*.1,0.86*show_rate_max,Form("DETECTOR:RD%d",det_id+1));
 
+  lat.DrawLatex(live*.15,0.78*show_rate_max,Form("212Po (all period) %.2lf +- %.2lf counts/day",po212_rate,po212_rate_error));
   lat.DrawLatex(live*.15,0.7*show_rate_max,Form("214Po (all period) %.2lf +- %.2lf counts/day",po214_rate,po214_rate_error));
-  lat.DrawLatex(live*.15,0.6*show_rate_max,Form("218Po (all period)%.2lf +- %.2lf counts/day",po218_rate,po218_rate_error)); 
-  lat.DrawLatex(live*.15,0.5*show_rate_max,Form("214Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day",integ_win_start_in_days,integ_win_end_in_days,po214_rate_sel,po214_rate_sel_error));
-  lat.DrawLatex(live*.15,0.4*show_rate_max,Form("218Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day",integ_win_start_in_days,integ_win_end_in_days,po218_rate_sel,po218_rate_sel_error)); 
+  lat.DrawLatex(live*.15,0.62*show_rate_max,Form("218Po (all period)%.2lf +- %.2lf counts/day",po218_rate,po218_rate_error)); 
+  lat.DrawLatex(live*.15,0.54*show_rate_max,Form("212Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day",integ_win_start_in_days,integ_win_end_in_days,po212_rate_sel,po212_rate_sel_error));
+  lat.DrawLatex(live*.15,0.46*show_rate_max,Form("214Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day",integ_win_start_in_days,integ_win_end_in_days,po214_rate_sel,po214_rate_sel_error));
+  lat.DrawLatex(live*.15,0.38*show_rate_max,Form("218Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day",integ_win_start_in_days,integ_win_end_in_days,po218_rate_sel,po218_rate_sel_error)); 
 
     if(verbose) std::cout << "--- file output ---" <<std::endl;
   TFile* out_file = TFile::Open(outfilename, "RECREATE");
@@ -610,21 +659,25 @@ int main(int argc, char** argv){
   h_ene->Write();
   h_ph_q->Write();
   h_poraw->Write();
+  h_po212->Write();
   h_po214->Write();
   h_po218->Write();
+  g_po212_rate->Write();
   g_po214_rate->Write();
   g_po218_rate->Write();
   TTree* info_tree = new TTree("info_tree","info_tree");
-  double info_live,info_cal,info_po214_rate,info_po218_rate;
+  double info_live,info_cal,info_po212_rate,info_po214_rate,info_po218_rate;
   TString info_infilename;
 
   info_tree->Branch("live",&info_live);
   info_tree->Branch("cal",&info_cal);
+  info_tree->Branch("po212_rate",&info_po212_rate);
   info_tree->Branch("po214_rate",&info_po214_rate);
   info_tree->Branch("po218_rate",&info_po218_rate);
   info_tree->Branch("infile",&info_infilename);
   info_live = live;
   info_cal  = cal_a[det_id];
+  info_po212_rate  = po212_rate;
   info_po214_rate  = po214_rate;
   info_po218_rate  = po218_rate;
   info_infilename = infilename;
@@ -638,7 +691,7 @@ int main(int argc, char** argv){
   out_file->Close();
 
   out_file_rate.open(ratefilename, std::ios::out);
-  out_file_rate<<po214_rate_sel<<"\t"<<po214_rate_sel_error<<"\t"<<po218_rate_sel<<"\t"<<po218_rate_sel_error<<"\t"<<live<<std::endl;
+  out_file_rate<<po214_rate_sel<<"\t"<<po214_rate_sel_error<<"\t"<<po218_rate_sel<<"\t"<<po218_rate_sel_error<<"\t"<<po212_rate_sel<<"\t"<<po212_rate_sel_error<<"\t"<<live<<std::endl;
   out_file_rate.close();
   //for monitoring
   //  std::cerr<<(fill_po214_count+1)*tbin<<"\t"<<fill_po214_ev_count/tbin<<"\t"<<pow(fill_po214_ev_count,0.5)/tbin<<std::endl;sel_err

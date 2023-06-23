@@ -7,6 +7,7 @@
 	    "data_dir": "/home/msgc/RD1/data",
 	    "ana_dir": "/home/msgc/RD1/ana",
 	    "mon_dir": "/home/msgc/status/radon/RD1/rnmon",
+	    "rate_Po212": "Po212",
 	    "rate_Po214": "Po214",
             "rate_Po218": "Po218"
 	},
@@ -16,6 +17,7 @@
 	    "data_dir": "/home/msgc/RD2/data",
 	    "ana_dir": "/home/msgc/RD2/ana",
 	    "mon_dir": "/home/msgc/status/radon/RD2/rnmon",
+	    "rate_Po212": "Po212",
 	    "rate_Po214": "Po214",
             "rate_Po218": "Po218"
 	}

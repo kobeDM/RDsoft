@@ -1,12 +1,7 @@
 {
   "ana": {
-<<<<<<< HEAD
     "cal_factor_a_RD1": 8.5,
-    "cal_factor_a_RD2": 18.5,
-=======
-    "cal_factor_a_RD1": 8.8,
-    "cal_factor_a_RD2": 18.7,
->>>>>>> e6f54e6fc005d80117e6edbf28cfdc601634e63f
+    "cal_factor_a_RD2": 17.9,
     "cal_factor_a_RD3": 8.4,
     "cal_factor_b_RD1": 0,
     "cal_factor_b_RD2": 0,
@@ -17,6 +12,7 @@
     "ene_reso": 2.5,
     "ene_Po218": 6.00235,
     "ene_Po214": 7.68682,
+    "ene_Po212": 8.785,
     "ene_win_upper": 0,
     "ene_win_lower": 3,
     "time_win_minute": 10,
@@ -37,7 +33,7 @@
     "SAMPLING RATE": "10000000.0",
     "SAMPLING NUMBER": "1024",
     "DYNAMIC RANGE": 2.5,
-    "TRIGGER THRESHOLD CH1": "0.200",
-    "RUN START": "1687175626.531393"
+    "TRIGGER THRESHOLD CH1": "0.100",
+    "RUN START": "1687175549.069285"
   }
 }

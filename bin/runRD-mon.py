@@ -127,6 +127,7 @@ while(1):
                     detector=name_list[detID]
                     det=list(json_load['detectors'].items())[detID][0]
                     measurement=json_load['detectors'][det]['measurement']
+                    Po212=json_load['detectors'][det]['rate_Po212']
                     Po214=json_load['detectors'][det]['rate_Po214']
                     Po218=json_load['detectors'][det]['rate_Po218']
 
@@ -143,17 +144,16 @@ while(1):
                         data=[{'measurement':measurement,'fields':{'value':rate,'error':rate_error},'time':np_ut,'tags':{'detector':detector,'isotope':Po214}}]
                     elif  'po218' in infile:
                         data=[{'measurement':measurement,'fields':{'value':rate,'error':rate_error},'time':np_ut,'tags':{'detector':detector,'isotope':Po218}}]
+                    elif  'po212' in infile:
+                        data=[{'measurement':measurement,'fields':{'value':rate,'error':rate_error},'time':np_ut,'tags':{'detector':detector,'isotope':Po212}}]
+                   
                     else:
                         data=[{'measurement':measurement,'fields':{'value':rate,'error':rate_error},'time':np_ut,'tags':{'detector':detector,'isotope':'others'}}]
                     client.write_points(data)                                            
-                    #                    data=[{'measurement':measurement,'fields':{'value':po218rate},'time':np_ut,'tags':{'detector':detector,'isotope':Po218}}]
-                    #client.write_points(data)
 
-                    
-        #proc=subprocess.run(cmd,shell=True)
+        #write to influxDB
         det=list(json_load['detectors'].items())[detID][0]
         detector=json_load['detectors'][det]['detector']
-        #data=[{'measurement':'test','fields':{'value':5.0},'time':1687412683324915285,'tags':{'detector':detector,'isotope':Po214}}]
         data=[{'measurement':'test','fields':{'value':8.0},'time':1687412683324915288,'tags':{'detector':detector,'isotope':Po218}}]
         client.write_points(data)
 
@@ -161,8 +161,3 @@ while(1):
     print("sleeping for ",interval," seconds.")
     time.sleep(interval)
 
-#print(json_load['detectors'])
-#print(json_load['detectors']['1'])
-#print(list(json_load['detectors'])[0])
-
-#directories
