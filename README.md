@@ -39,5 +39,5 @@ Grafana monitoring will be performed by:
 $ cd ~status/radon
 $ nohup runRD-mon.py &(monitoring runner including auto analysis)
 access http://10.37.0.216:3000/
-check the energy spectrum on na16>RD?/ana/YYYYmmDD/rnrate.png
+check the energy spectrum on na16:~/RD?/ana/YYYYmmDD/rnrate.png
 ```
