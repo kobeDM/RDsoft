@@ -120,9 +120,10 @@ while(1):
         numofratefiles=len(rate_file_list[detID])-1
         print("number of ratefiles: ",numofratefiles)
         for ratefileID in range (numofratefiles):
-            with open(rate_file_list[detID][ratefileID]) as f:
+            infile=rate_file_list[detID][ratefileID]
+            with open(infile) as f:
                 l=f.readlines()
-                for lineID in range(len(l)-1):
+                for lineID in range(len(l)):
                     detector=name_list[detID]
                     det=list(json_load['detectors'].items())[detID][0]
                     measurement=json_load['detectors'][det]['measurement']
@@ -133,15 +134,20 @@ while(1):
                     evtime=l[lineID].split(" ")[0]
                     evtime_ut=datetime.datetime.strptime(evtime,"%Y/%m/%d/%H:%M:%S").timestamp()
                     np_ut=np.int64(datetime.datetime.strptime(evtime,"%Y/%m/%d/%H:%M:%S").timestamp()*1e9)
-                    po214rate=float(l[lineID].split(" ")[1])
-                    po218rate=float(l[lineID].split(" ")[2])
+                    rate=float(l[lineID].split(" ")[1])
+                    rate_error=float(l[lineID].split(" ")[2])           
+                    
                     if(verbose):
-                        print(detector," ",ratefileID," ",lineID," ",rate_file_name_short," ",evtime," ",np_ut," ",po214rate," ",po218rate)
-                                            
-                    data=[{'measurement':measurement,'fields':{'value':po214rate},'time':np_ut,'tags':{'detector':detector,'isotope':Po214}}]
+                        print(detector," ",ratefileID," ",lineID," ",rate_file_name_short," ",evtime," ",np_ut," ",rate," ",rate_error)
+                    if 'po214' in infile:
+                        data=[{'measurement':measurement,'fields':{'value':rate,'error':rate_error},'time':np_ut,'tags':{'detector':detector,'isotope':Po214}}]
+                    elif  'po218' in infile:
+                        data=[{'measurement':measurement,'fields':{'value':rate,'error':rate_error},'time':np_ut,'tags':{'detector':detector,'isotope':Po218}}]
+                    else:
+                        data=[{'measurement':measurement,'fields':{'value':rate,'error':rate_error},'time':np_ut,'tags':{'detector':detector,'isotope':'others'}}]
                     client.write_points(data)                                            
-                    data=[{'measurement':measurement,'fields':{'value':po218rate},'time':np_ut,'tags':{'detector':detector,'isotope':Po218}}]
-                    client.write_points(data)
+                    #                    data=[{'measurement':measurement,'fields':{'value':po218rate},'time':np_ut,'tags':{'detector':detector,'isotope':Po218}}]
+                    #client.write_points(data)
 
                     
         #proc=subprocess.run(cmd,shell=True)

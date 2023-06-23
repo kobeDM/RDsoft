@@ -1,5 +1,5 @@
 {    
-    "interval": 10,
+    "interval": 300,
     "detectors":{
 	"1": {
 	    "detector":"RD1",
