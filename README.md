@@ -36,5 +36,5 @@ $ runRD-ana.py (analysis runner)
 Grafana monitoring will be performed by: 
 ```
 $ cd ~status/radon
-$ nhup runRD-mon.py &(monitoring runner including auto analysis) 
+$ nohup runRD-mon.py &(monitoring runner including auto analysis) 
 ```
