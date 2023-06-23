@@ -351,56 +351,56 @@ int main(int argc, char** argv){
     h_ph_nc->Fill(volt_max-offset);
     if(veto==0){//||!vetocut){
       thisbin=int((timestamp-runstarttime)/60./60/24/tbin);
-	h_ph->Fill(volt_max-offset);
-	h_q->Fill(charge);
-	h_ph_q->Fill(volt_max-offset,charge);
-	if(E>Eth_MeV)h_ene->Fill(E);
-	if(ene_Po218*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po218*(1+ene_win_upper*ene_reso/100)){
-	  h_po218->Fill(E);
-	  if(thisbin>-1&&thisbin<binmax){
-	    po218_tdep[thisbin]++;
-	    po218_time[thisbin]=timestamp;
-	    if(verbose){
-	      std::cout <<"Po218\t"<<thisbin<<"\t"<<E<<"\t"<<po218_tdep[thisbin]<<"\t"<<timestamp<<"\t"<<runstarttime<<"\t"<<timestamp-runstarttime<<std::endl;
-	    }
-	  }
-	  if((timestamp-runstarttime)/60./60/24>integ_win_start_in_days&&(timestamp-runstarttime)/60./60/24<integ_win_end_in_days){
-	    h_po218_sel->Fill(E);
+      h_ph->Fill(volt_max-offset);
+      h_q->Fill(charge);
+      h_ph_q->Fill(volt_max-offset,charge);
+      if(E>Eth_MeV)h_ene->Fill(E);
+      //po218
+      if(ene_Po218*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po218*(1+ene_win_upper*ene_reso/100)){
+	h_po218->Fill(E);
+	if(thisbin>-1&&thisbin<binmax){
+	  po218_tdep[thisbin]++;
+	  po218_time[thisbin]=timestamp;
+	  if(verbose){
+	    std::cout <<"Po218\t"<<thisbin<<"\t"<<E<<"\t"<<po218_tdep[thisbin]<<"\t"<<timestamp<<"\t"<<runstarttime<<"\t"<<timestamp-runstarttime<<std::endl;
 	  }
 	}
-	//po212
-	if(ene_Po212*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po212*(1+ene_win_upper*ene_reso/100)){
-	  h_po212->Fill(E);
-	  if(thisbin>-1&&thisbin<binmax){
-	    po212_tdep[thisbin]++;
-	    po212_time[thisbin]=timestamp;
-	    if(verbose){
-	      std::cout <<"Po212\t"<<thisbin<<"\t"<<E<<"\t"<<po212_tdep[thisbin]<<"\t"<<timestamp<<"\t"<<runstarttime<<"\t"<<timestamp-runstarttime<<std::endl;
-	    }
-	  }
-	  if((timestamp-runstarttime)/60./60/24>integ_win_start_in_days&&(timestamp-runstarttime)/60./60/24<integ_win_end_in_days){
-	    h_po212_sel->Fill(E);
-	  }
+	if((timestamp-runstarttime)/60./60/24>integ_win_start_in_days&&(timestamp-runstarttime)/60./60/24<integ_win_end_in_days){
+	  h_po218_sel->Fill(E);
 	}
-	//Po214
-	if(ene_Po214*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po214*(1+ene_win_upper*ene_reso/100)){
-	  h_po214->Fill(E);
-   if(ene_Po214*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po214*(1+ene_win_upper*ene_reso/100)){
-	//thisbin=int((timestamp-runstarttime)/60/60/24/tbin);
-      if(thisbin>-1&&thisbin<binmax){
-	po214_tdep[thisbin]++;
-	po214_time[thisbin]=timestamp;
-	if(verbose){
-	  std::cout <<"Po214\t"<<thisbin<<"\t"<<E<<"\t"<<timestamp<<"\t"<<runstarttime<<std::endl;
-	   }
       }
-      if((timestamp-runstarttime)/60./60/24>integ_win_start_in_days&&(timestamp-runstarttime)/60./60/24<integ_win_end_in_days){
-	  h_po214_sel->Fill(E);
+      //po212
+      if(ene_Po212*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po212*(1+ene_win_upper*ene_reso/100)){
+	h_po212->Fill(E);
+	if(thisbin>-1&&thisbin<binmax){
+	  po212_tdep[thisbin]++;
+	  po212_time[thisbin]=timestamp;
+	  if(verbose){
+	    std::cout <<"Po212\t"<<thisbin<<"\t"<<E<<"\t"<<po212_tdep[thisbin]<<"\t"<<timestamp<<"\t"<<runstarttime<<"\t"<<timestamp-runstarttime<<std::endl;
 	  }
 	}
-	
-    }
-    
+	if((timestamp-runstarttime)/60./60/24>integ_win_start_in_days&&(timestamp-runstarttime)/60./60/24<integ_win_end_in_days){
+	  h_po212_sel->Fill(E);
+	}
+      }
+      //Po214
+      if(ene_Po214*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po214*(1+ene_win_upper*ene_reso/100)){
+	h_po214->Fill(E);
+	if(ene_Po214*(1-ene_win_lower*ene_reso/100)<E&&E<ene_Po214*(1+ene_win_upper*ene_reso/100)){
+	  //thisbin=int((timestamp-runstarttime)/60/60/24/tbin);
+	  if(thisbin>-1&&thisbin<binmax){
+	    po214_tdep[thisbin]++;
+	    po214_time[thisbin]=timestamp;
+	    if(verbose){
+	      std::cout <<"Po214\t"<<thisbin<<"\t"<<E<<"\t"<<timestamp<<"\t"<<runstarttime<<std::endl;
+	    }
+	  }
+	  if((timestamp-runstarttime)/60./60/24>integ_win_start_in_days&&(timestamp-runstarttime)/60./60/24<integ_win_end_in_days){
+	    h_po214_sel->Fill(E);
+	  }
+	}	
+      }
+      
     //rate calc (previous event)
     double rate;
     if(timestamp==cut_after_time){
@@ -456,7 +456,7 @@ int main(int argc, char** argv){
     monfilename_212=mondir+monfilename_212;
     if(monfilename_212!=monfilename_last_212){
       out_file_212.close();
-      monfilename_last_214=monfilename_212;
+      monfilename_last_212=monfilename_212;
       out_file_212.open(monfilename_212, std::ios::out);
     }
     out_file_212<<tmpc[1]<<" "<<std::fixed<<std::setprecision(2)<<po212_tdep[i]/tbin<<" "<<pow(po212_tdep[i],0.5)/tbin<<std::endl;
