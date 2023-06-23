@@ -36,5 +36,6 @@ $ runRD-ana.py (analysis runner)
 Grafana monitoring will be performed by: 
 ```
 $ cd ~status/radon
-$ nohup runRD-mon.py &(monitoring runner including auto analysis) 
+$ nohup runRD-mon.py &(monitoring runner including auto analysis)
+access http://10.37.0.216:3000/
 ```
