@@ -22,7 +22,8 @@ $ mkdir build && cd build && cmake ../source && make && make install
 $ cd ~RD?/data (?=1 or 2 or 3)
 $ runRD-daq.py (daq runner, use with adalm) 
 $ runRD-daq.py & (daq runner, use with adalm, run in BG from remote) 
-$ RD-daqkiller.py (daq killer) 
+$ RD-daqkiller.py (daq killer)
+
 ```
 
 
@@ -38,4 +39,5 @@ Grafana monitoring will be performed by:
 $ cd ~status/radon
 $ nohup runRD-mon.py &(monitoring runner including auto analysis)
 access http://10.37.0.216:3000/
+check the energy spectrum on na16>RD?/ana/YYYYmmDD/rnrate.png
 ```
