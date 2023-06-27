@@ -4,6 +4,8 @@ Softwares for NEWAGE radon detectors. DAQ with ALADM 2000 and anapysis with root
 $ cd ~/
 $ git clone https://github.com/kobeDM/RDsoft
 
+##requires boost
+$ sudo apt install libboost-dev
 
 ## DAQ
 ### setup
