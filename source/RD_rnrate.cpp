@@ -168,10 +168,12 @@ int main(int argc, char** argv){
   filename = outfile_tmp.substr(0,pos);
   //std::string 
   TString   ratefilename=filename+"/rate.dat";
+  TString   fitresfilename=filename+"/fitres.dat";
   TString   pngfilename=filename+"/rnrate.png";
 
   if(verbose)
     std::cout<<"ratefile: "<<ratefilename<<std::endl;
+    std::cout<<"fitresfile: "<<fitresfilename<<std::endl;
     std::cout<<"imagefile: "<<pngfilename<<std::endl;
   char tmpc[3][32];
 
@@ -750,6 +752,11 @@ int main(int argc, char** argv){
   out_file_rate.open(ratefilename, std::ios::out);
   out_file_rate<<po214_rate_sel<<"\t"<<po214_rate_sel_error<<"\t"<<po218_rate_sel<<"\t"<<po218_rate_sel_error<<"\t"<<po212_rate_sel<<"\t"<<po212_rate_sel_error<<"\t"<<live<<std::endl;
   out_file_rate.close();
+  out_file_rate.open(fitresfilename, std::ios::out);
+  out_file_rate<<po214_rate_fit<<"\t"<<po214_rate_fit_err<<"\t"<<po218_rate_fit<<"\t"<<po218_rate_fit_err<<"\t"<<po212_rate_fit<<"\t"<<po212_rate_fit_err<<"\t"<<live<<std::endl;
+  out_file_rate.close();
+
+  
   //for monitoring
   //  std::cerr<<(fill_po214_count+1)*tbin<<"\t"<<fill_po214_ev_count/tbin<<"\t"<<pow(fill_po214_ev_count,0.5)/tbin<<std::endl;sel_err
   //  std::cout << "--- written root file ----" <<std::endl;
