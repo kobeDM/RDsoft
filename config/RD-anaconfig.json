@@ -1,7 +1,7 @@
 {
   "ana": {
     "cal_factor_a_RD1": 8.5,
-    "cal_factor_a_RD2": 17.9,
+    "cal_factor_a_RD2": 18.3,
     "cal_factor_a_RD3": 8.4,
     "cal_factor_b_RD1": 0,
     "cal_factor_b_RD2": 0,
@@ -10,18 +10,18 @@
     "twin_avg_start_us": 40,
     "twin_avg_window_us": 5,
     "ene_reso": 2.5,
-    "ene_Po218": 6.00235,
-    "ene_Po214": 7.68682,
-    "ene_Po212": 8.785,
     "ene_win_upper": 0,
     "ene_win_lower": 3,
     "time_win_minute": 10,
     "time_win_hour": 6,
-    "integ_win_start_in_days": 0,
-    "integ_win_end_in_days": 4.0
+    "measurement_offset_in_days": 0.0,
+    "integ_win_start_in_days": 3.0,
+    "integ_win_end_in_days": 5.5,
+    "fit_win_start_in_days": 0.0,
+    "fit_win_end_in_days": 5.0
   },
   "view": {
-    "show_rate_max": 100.0,
+    "show_rate_max": 200.0,
     "show_sp_bin": 100,
     "show_sp_min": -0.1,
     "show_sp_max": 3.0,
@@ -33,7 +33,7 @@
     "SAMPLING RATE": "10000000.0",
     "SAMPLING NUMBER": "1024",
     "DYNAMIC RANGE": 2.5,
-    "TRIGGER THRESHOLD CH1": "0.100",
-    "RUN START": "1687175549.069285"
+    "TRIGGER THRESHOLD CH1": "0.200",
+    "RUN START": "1688472721.412471"
   }
 }
