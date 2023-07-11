@@ -753,6 +753,7 @@ int main(int argc, char** argv){
   out_file_rate<<po214_rate_sel<<"\t"<<po214_rate_sel_error<<"\t"<<po218_rate_sel<<"\t"<<po218_rate_sel_error<<"\t"<<po212_rate_sel<<"\t"<<po212_rate_sel_error<<"\t"<<live<<std::endl;
   out_file_rate.close();
   out_file_rate.open(fitresfilename, std::ios::out);
+  out_file_rate<<"# po214_rate"<<"\t"<<"po214_rate_err"<<"\t"<<"po218_rate"<<"\t"<<"po218_rate_err"<<"\t"<<"po212_rate"<<"\t"<<"po212_rate_err"<<"\t"<<"livetime(days)"<<std::endl;
   out_file_rate<<po214_rate_fit<<"\t"<<po214_rate_fit_err<<"\t"<<po218_rate_fit<<"\t"<<po218_rate_fit_err<<"\t"<<po212_rate_fit<<"\t"<<po212_rate_fit_err<<"\t"<<live<<std::endl;
   out_file_rate.close();
 
