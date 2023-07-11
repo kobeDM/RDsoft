@@ -655,7 +655,7 @@ int main(int argc, char** argv){
   func_po212->SetLineWidth(linewidth_rate);
   g_po212_rate->Fit(func_po212,"","",fit_win_start_in_days,fit_win_end_in_days);
     
-  TF1 *func_po214=new TF1("func_po214","[0]*(1-exp(-(x-[2])/[1]))",fit_win_start_in_days,fit_win_end_in_days);
+  TF1 *func_po214=new TF1("func_po214","[0]*(1-exp(-(x+[2])/[1]))",fit_win_start_in_days,fit_win_end_in_days);
   func_po214->SetLineColor(col_Po214);
   func_po214->SetLineWidth(linewidth_rate);
   func_po214->SetParameter(0,show_rate_max);
@@ -663,7 +663,7 @@ int main(int argc, char** argv){
   func_po214->FixParameter(2,measurement_offset_in_days);
   g_po214_rate->Fit(func_po214,"","",fit_win_start_in_days,fit_win_end_in_days);
     
-  TF1 *func_po218=new TF1("func_po218","[0]*(1-exp(-(x-[2])/[1]))",fit_win_start_in_days,fit_win_end_in_days);
+  TF1 *func_po218=new TF1("func_po218","[0]*(1-exp(-(x+[2])/[1]))",fit_win_start_in_days,fit_win_end_in_days);
   func_po218->SetLineColor(kAzure+1);
   func_po218->SetLineWidth(2);
   func_po218->SetParameter(0,show_rate_max);
@@ -700,15 +700,15 @@ int main(int argc, char** argv){
   c_rn->cd(3);    
   c_rn->DrawFrame(0,0,1,1,"Rn Rate");
   
-  lat.SetTextSize(0.05);
+  lat.SetTextSize(0.06);
   lat.SetTextColor(kBlack);
-  lat.DrawLatex(0.1,0.9,Form("218Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day",integ_win_start_in_days,integ_win_end_in_days,po218_rate_sel,po218_rate_sel_error)); 
-  lat.DrawLatex(0.1,0.85,Form("212Po (all period) %.2lf +- %.2lf counts/day",po212_rate,po212_rate_error));
-  lat.DrawLatex(.1,0.8,Form("214Po (all period) %.2lf +- %.2lf counts/day",po214_rate,po214_rate_error));
-  lat.DrawLatex(.1,0.75,Form("218Po (all period)%.2lf +- %.2lf counts/day",po218_rate,po218_rate_error)); 
-  lat.DrawLatex(.1,0.7,Form("212Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day",integ_win_start_in_days,integ_win_end_in_days,po212_rate_sel,po212_rate_sel_error));
-  lat.DrawLatex(.1,0.65,Form("214Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day",integ_win_start_in_days,integ_win_end_in_days,po214_rate_sel,po214_rate_sel_error));
-  lat.DrawLatex(.1,0.6,Form("218Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day",integ_win_start_in_days,integ_win_end_in_days,po218_rate_sel,po218_rate_sel_error)); 
+  //  lat.DrawLatex(0.1,0.9,Form("218Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day",integ_win_start_in_days,integ_win_end_in_days,po218_rate_sel,po218_rate_sel_error)); 
+  lat.DrawLatex(0.1,0.82,Form("212Po (all period) %.2lf +- %.2lf counts/day",po212_rate,po212_rate_error));
+  lat.DrawLatex(.1,0.74,Form("214Po (all period) %.2lf +- %.2lf counts/day",po214_rate,po214_rate_error));
+  lat.DrawLatex(.1,0.66,Form("218Po (all period)%.2lf +- %.2lf counts/day",po218_rate,po218_rate_error)); 
+  lat.DrawLatex(.1,0.58,Form("212Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day",integ_win_start_in_days,integ_win_end_in_days,po212_rate_sel,po212_rate_sel_error));
+  lat.DrawLatex(.1,0.5,Form("214Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day",integ_win_start_in_days,integ_win_end_in_days,po214_rate_sel,po214_rate_sel_error));
+  lat.DrawLatex(.1,0.42,Form("218Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day",integ_win_start_in_days,integ_win_end_in_days,po218_rate_sel,po218_rate_sel_error)); 
 
     if(verbose) std::cout << "--- file output ---" <<std::endl;
   TFile* out_file = TFile::Open(outfilename, "RECREATE");
