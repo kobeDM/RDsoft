@@ -686,11 +686,11 @@ int main(int argc, char** argv){
   lat.DrawLatex(live*.05,0.9*show_rate_max,Form("DATA:%s",infile.c_str()));
   lat.DrawLatex(live*.05,0.82*show_rate_max,Form("DETECTOR:RD%d",det_id+1));
   lat.SetTextColor(col_Po214);
-  lat.DrawLatex(live*.5,0.2*show_rate_max,Form("Po214: %.1f +- %.1f cpd.",po214_rate_fit,po214_rate_fit_err));
+  lat.DrawLatex(live*.05,0.74*show_rate_max,Form("Po214: %.1f +- %.1f cpd.",po214_rate_fit,po214_rate_fit_err));
   lat.SetTextColor(col_Po218);
-  lat.DrawLatex(live*.5,0.1*show_rate_max,Form("Po218: %.1f +- %.1f cpd.",po218_rate_fit,po218_rate_fit_err));
+  lat.DrawLatex(live*.05,0.66*show_rate_max,Form("Po218: %.1f +- %.1f cpd.",po218_rate_fit,po218_rate_fit_err));
   lat.SetTextColor(col_Po212);
-  lat.DrawLatex(live*.5,0.3*show_rate_max,Form("Po212: %.1f +- %.1f cpd.",po212_rate_fit,po212_rate_fit_err));
+  lat.DrawLatex(live*.05,0.58*show_rate_max,Form("Po212: %.1f +- %.1f cpd.",po212_rate_fit,po212_rate_fit_err));
 
 
 
