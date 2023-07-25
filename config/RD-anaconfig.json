@@ -1,13 +1,10 @@
 {
   "ana": {
     "cal_factor_a_RD1": 8.5,
-<<<<<<< HEAD
     "cal_factor_a_RD2": 18.3,
     "cal_factor_a_RD3": 8.4,
-=======
     "cal_factor_a_RD2": 17.9,
     "cal_factor_a_RD3": 10.2,
->>>>>>> a68e9c74dd4a2a7a805e66d9c303885b2862b1eb
     "cal_factor_b_RD1": 0,
     "cal_factor_b_RD2": 0,
     "cal_factor_b_RD3": 0,
@@ -38,12 +35,7 @@
     "SAMPLING RATE": "10000000.0",
     "SAMPLING NUMBER": "1024",
     "DYNAMIC RANGE": 2.5,
-<<<<<<< HEAD
     "TRIGGER THRESHOLD CH1": "0.200",
     "RUN START": "1688472721.412471"
-=======
-    "TRIGGER THRESHOLD CH1": "0.050",
-    "RUN START": "1687832885.379335"
->>>>>>> a68e9c74dd4a2a7a805e66d9c303885b2862b1eb
   }
 }
