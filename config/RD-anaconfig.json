@@ -2,7 +2,7 @@
   "ana": {
     "cal_factor_a_RD1": 8.5,
     "cal_factor_a_RD2": 17.9,
-    "cal_factor_a_RD3": 10.2,
+    "cal_factor_a_RD3": 9.5,
     "cal_factor_b_RD1": 0,
     "cal_factor_b_RD2": 0,
     "cal_factor_b_RD3": 0,
@@ -17,8 +17,9 @@
     "ene_win_lower": 3,
     "time_win_minute": 10,
     "time_win_hour": 6,
-    "integ_win_start_in_days": 0,
-    "integ_win_end_in_days": 4.0
+    "measurement_offset_in_days": 0.0,
+    "integ_win_start_in_days": 3.0,
+    "integ_win_end_in_days": 5.5,
   },
   "view": {
     "show_rate_max": 100.0,
