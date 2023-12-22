@@ -1,3 +1,0 @@
-/home/msgc/RDsoft/source/../bin/RD-daq
-/home/msgc/RDsoft/source/../bin/RD_dat2root
-/home/msgc/RDsoft/source/../bin/RD_rnrate

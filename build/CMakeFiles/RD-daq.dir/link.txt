@@ -1,1 +1,0 @@
-/usr/bin/c++   -std=c++17 -pipe -fsigned-char -pthread -rdynamic CMakeFiles/RD-daq.dir/RD-daq.cpp.o -o RD-daq   -L/usr/local/root/root_v6.28.04/lib  -Wl,-rpath,/usr/local/root/root_v6.28.04/lib: -lm2k 

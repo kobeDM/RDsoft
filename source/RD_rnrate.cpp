@@ -136,6 +136,9 @@ int main(int argc, char** argv){
   double show_rate_max=pt.get<double>("view.show_rate_max");
 
   double Toffset=0;
+  int show_Po214=pt.get<int>("view.show_Po214");
+  int show_Po218=pt.get<int>("view.show_Po218");
+  int show_Po212=pt.get<int>("view.show_Po212");
   int spbin=pt.get<int>("view.show_sp_bin");//show_rate_max");=100;
   double spmax=pt.get<double>("view.show_sp_max");
   double spmin=pt.get<double>("view.show_sp_min");
@@ -309,10 +312,10 @@ int main(int argc, char** argv){
   int veto;
   double volt,offset,E;
   double V_avg=0;
-   double volt_max;
-   double charge=0;				       
-   double veto_neg=neg_veto_factor*daq_Vth;
-   double Eth_MeV=2.0;
+  double volt_max;
+  double charge=0;				       
+  double veto_neg=neg_veto_factor*daq_Vth;
+  double Eth_MeV=2.0;
 
   struct tm *ptm;
   for(int i=0;i<binmax;i++  ){
@@ -615,12 +618,12 @@ int main(int argc, char** argv){
 
 
   h_poraw->Draw();
-  h_po212->Draw("hist same");
-  h_po214->Draw("hist same");
-  h_po218->Draw("hist same");
-  h_po212_sel->Draw("hist same");
-  h_po214_sel->Draw("hist same");
-  h_po218_sel->Draw("hist same");
+  if (show_Po212 == 1)h_po212->Draw("hist same");
+  if (show_Po214 == 1)h_po214->Draw("hist same");
+  if (show_Po218 == 1)h_po218->Draw("hist same");
+  if (show_Po212 == 1)h_po212_sel->Draw("hist same");
+  if (show_Po214 == 1)h_po214_sel->Draw("hist same");
+  if (show_Po218 == 1)h_po218_sel->Draw("hist same");
   TLatex lat;
   lat.SetTextSize(0.06);
   float labelposx=spMmin+.05*(spMmax-spMmin);
@@ -646,14 +649,14 @@ int main(int argc, char** argv){
   g_po218_rate->SetMarkerSize(markersize_rate);
   g_po218_rate->SetLineWidth(linewidth_rate);
   g_po218_rate->SetMarkerStyle(markerstyle_rate);
-  g_po212_rate->Draw("p same");
-  g_po214_rate->Draw("p same");
-  g_po218_rate->Draw("p same");
+  if (show_Po212 == 1)g_po212_rate->Draw("p same");
+  if (show_Po214 == 1)g_po214_rate->Draw("p same");
+  if (show_Po218 == 1)g_po218_rate->Draw("p same");
   
   TF1 *func_po212=new TF1("func_po212","[0]",fit_win_start_in_days,fit_win_end_in_days);
   func_po212->SetLineColor(col_Po212);
   func_po212->SetLineWidth(linewidth_rate);
-  g_po212_rate->Fit(func_po212,"","",fit_win_start_in_days,fit_win_end_in_days);
+  if (show_Po212 == 1)g_po212_rate->Fit(func_po212,"","",fit_win_start_in_days,fit_win_end_in_days);
     
   TF1 *func_po214=new TF1("func_po214","[0]*(1-exp(-(x+[2])/[1]))",fit_win_start_in_days,fit_win_end_in_days);
   func_po214->SetLineColor(col_Po214);
@@ -661,7 +664,7 @@ int main(int argc, char** argv){
   func_po214->SetParameter(0,show_rate_max);
   func_po214->FixParameter(1,t_radon220);
   func_po214->FixParameter(2,measurement_offset_in_days);
-  g_po214_rate->Fit(func_po214,"","",fit_win_start_in_days,fit_win_end_in_days);
+  if (show_Po214 == 1)g_po214_rate->Fit(func_po214,"","",fit_win_start_in_days,fit_win_end_in_days);
     
   TF1 *func_po218=new TF1("func_po218","[0]*(1-exp(-(x+[2])/[1]))",fit_win_start_in_days,fit_win_end_in_days);
   func_po218->SetLineColor(kAzure+1);
@@ -669,7 +672,7 @@ int main(int argc, char** argv){
   func_po218->SetParameter(0,show_rate_max);
   func_po218->FixParameter(1,t_radon220);
   func_po218->FixParameter(2,measurement_offset_in_days);
-  g_po218_rate->Fit(func_po218,"","",fit_win_start_in_days,fit_win_end_in_days);
+  if (show_Po218 == 1)g_po218_rate->Fit(func_po218,"","",fit_win_start_in_days,fit_win_end_in_days);
   
   double po212_rate_fit = func_po212->GetParameter(0);
   double po212_rate_fit_err = func_po212->GetParError(0);
@@ -688,13 +691,11 @@ int main(int argc, char** argv){
   lat.DrawLatex(live*.05,0.9*show_rate_max,Form("DATA:%s",infile.c_str()));
   lat.DrawLatex(live*.05,0.82*show_rate_max,Form("DETECTOR:RD%d",det_id+1));
   lat.SetTextColor(col_Po214);
-  lat.DrawLatex(live*.05,0.74*show_rate_max,Form("Po214: %.1f +- %.1f cpd.",po214_rate_fit,po214_rate_fit_err));
+  if (show_Po214 == 1)lat.DrawLatex(live*.05,0.74*show_rate_max,Form("Po214: %.1f +- %.1f cpd.",po214_rate_fit,po214_rate_fit_err));
   lat.SetTextColor(col_Po218);
-  lat.DrawLatex(live*.05,0.66*show_rate_max,Form("Po218: %.1f +- %.1f cpd.",po218_rate_fit,po218_rate_fit_err));
+  if (show_Po218 == 1)lat.DrawLatex(live*.05,0.66*show_rate_max,Form("Po218: %.1f +- %.1f cpd.",po218_rate_fit,po218_rate_fit_err));
   lat.SetTextColor(col_Po212);
-  lat.DrawLatex(live*.05,0.58*show_rate_max,Form("Po212: %.1f +- %.1f cpd.",po212_rate_fit,po212_rate_fit_err));
-
-
+  if (show_Po212 == 1)lat.DrawLatex(live*.05,0.58*show_rate_max,Form("Po212: %.1f +- %.1f cpd.",po212_rate_fit,po212_rate_fit_err));
 
   //  c_rn->DrawFrame(0,0,live*1.1,show_rate_max,"Rn Rate;time(day);counts/day");
   c_rn->cd(3);    

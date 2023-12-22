@@ -1,0 +1,4 @@
+bin/*
+!bin/*.py
+build/*
+source/RD_rnrate_org.cpp
