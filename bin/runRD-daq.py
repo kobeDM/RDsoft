@@ -28,9 +28,9 @@ else:
 comment=args.comment
 
 #commands
-HOME=os.environ['HOME']+'/'
-backup_cmd=HOME+'RDsoft/bin/runRD-backup.py'
-daq_cmd=HOME+'RDsoft/bin/RD-daq'
+RDSW=os.environ['RDSW']+'/'
+backup_cmd=RDSW+'bin/runRD-backup.py'
+daq_cmd=RDSW+'bin/RD-daq'
 
 if args.sudo:
     print("\tinput password for sudo command.")
@@ -95,7 +95,7 @@ def mk_subrun(dirname):
     return dirname_next
 
 def auto_run():
-    subprocess.Popen(backup_cmd)
+    # subprocess.Popen(backup_cmd)
     while(True):
         runDAQ()
         time.sleep(1)
