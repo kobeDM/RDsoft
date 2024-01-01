@@ -21,10 +21,10 @@ def parser():
     return(opts)
 
 
-HOME=os.environ['HOME']+'/'
-CONFIG_SOURCE=HOME+'RDsoft/config/RD-anaconfig.json'
-analyzerbin='RDsoft/bin'
-rootmacrodir='RDsoft/root_macros'
+RDSW=os.environ['RDSW']+'/'
+CONFIG_SOURCE=RDSW+'config/RD-anaconfig.json'
+analyzerbin='/bin'
+rootmacrodir='root_macros'
 datadir='../data'
 
 
@@ -35,10 +35,10 @@ batch_mode=0
 chain_mode=0
 verbose=0
 
-RD_mkconfig=HOME+analyzerbin+'/RD-mkconfig.py '
-RD_dat2root=HOME+analyzerbin+'/RD_dat2root '
-RD_vis=HOME+analyzerbin+'/RD_rnrate '
-chainmacro=HOME+rootmacrodir+'/chain.cxx'
+RD_mkconfig=RDSW+analyzerbin+'/RD-mkconfig.py '
+RD_dat2root=RDSW+analyzerbin+'/RD_dat2root '
+RD_vis=RDSW+analyzerbin+'/RD_rnrate '
+chainmacro=RDSW+rootmacrodir+'/chain.cxx'
 
 #print('usage: run-RDana.py [-d, --display] [dir] [from] [to] [configfile]')
 print('### run-RDana.py ###')
