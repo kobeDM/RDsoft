@@ -351,7 +351,6 @@ int main(int argc, char **argv)
             ev_end_time = timestamp_end;
             dead_time += timestamp * 1e6 + timestamp_usec - (timestamp_end * 1e6 + timestamp_usec_end);
         }
-
         offset = 0;
         for (int i = twin_avg[0]; i < twin_avg[1]; i++)
         {
@@ -426,21 +425,18 @@ int main(int argc, char **argv)
             if (ene_Po214 * (1 - ene_win_lower * ene_reso / 100) < E && E < ene_Po214 * (1 + ene_win_upper * ene_reso / 100))
             {
                 h_po214->Fill(E);
-                if (ene_Po214 * (1 - ene_win_lower * ene_reso / 100) < E && E < ene_Po214 * (1 + ene_win_upper * ene_reso / 100))
+                if (thisbin > -1 && thisbin < binmax)
                 {
-                    if (thisbin > -1 && thisbin < binmax)
+                    po214_tdep[thisbin]++;
+                    po214_time[thisbin] = timestamp;
+                    if (verbose)
                     {
-                        po214_tdep[thisbin]++;
-                        po214_time[thisbin] = timestamp;
-                        if (verbose)
-                        {
-                            std::cout << "Po214\t" << thisbin << "\t" << E << "\t" << timestamp << "\t" << runstarttime << std::endl;
-                        }
+                        std::cout << "Po214\t" << thisbin << "\t" << E << "\t" << timestamp << "\t" << runstarttime << std::endl;
                     }
-                    if ((timestamp - runstarttime) / 60. / 60 / 24 > integ_win_start_in_days && (timestamp - runstarttime) / 60. / 60 / 24 < integ_win_end_in_days)
-                    {
-                        h_po214_sel->Fill(E);
-                    }
+                }
+                if ((timestamp - runstarttime) / 60. / 60 / 24 > integ_win_start_in_days && (timestamp - runstarttime) / 60. / 60 / 24 < integ_win_end_in_days)
+                {
+                    h_po214_sel->Fill(E);
                 }
             }
 
@@ -666,21 +662,24 @@ int main(int argc, char **argv)
     g_po218_rate->SetMarkerSize(markersize_rate);
     g_po218_rate->SetLineWidth(linewidth_rate);
     g_po218_rate->SetMarkerStyle(markerstyle_rate);
-    if (show_Po212 == 1)
+    // if (show_Po212 == 1)
+    if (show_Po212)
         g_po212_rate->Draw("p same");
-    if (show_Po214 == 1)
+    // if (show_Po214 == 1)
+    if (show_Po214)
         g_po214_rate->Draw("p same");
-    if (show_Po218 == 1)
+    // if (show_Po218 == 1)
+    if (show_Po218)
         g_po218_rate->Draw("p same");
     if (auto_fitrange) 
     {
-        fit_win_start_in_days = 0.0;
         fit_win_end_in_days = live;
     }
     TF1 *func_po212 = new TF1("func_po212", "[0]", fit_win_start_in_days, fit_win_end_in_days);
     func_po212->SetLineColor(col_Po212);
     func_po212->SetLineWidth(linewidth_rate);
-    if (show_Po212 == 1)
+    // if (show_Po212 == 1)
+    if (show_Po212)
         g_po212_rate->Fit(func_po212, "", "", fit_win_start_in_days, fit_win_end_in_days);
 
     TF1 *func_po214 = new TF1("func_po214", "[0]*(1-exp(-(x+[2])/[1]))", fit_win_start_in_days, fit_win_end_in_days);
@@ -689,7 +688,8 @@ int main(int argc, char **argv)
     func_po214->SetParameter(0, show_rate_max);
     func_po214->FixParameter(1, t_radon220);
     func_po214->FixParameter(2, measurement_offset_in_days);
-    if (show_Po214 == 1)
+    // if (show_Po214 == 1)
+    if (show_Po214)
         g_po214_rate->Fit(func_po214, "", "", fit_win_start_in_days, fit_win_end_in_days);
 
     TF1 *func_po218 = new TF1("func_po218", "[0]*(1-exp(-(x+[2])/[1]))", fit_win_start_in_days, fit_win_end_in_days);
@@ -698,7 +698,8 @@ int main(int argc, char **argv)
     func_po218->SetParameter(0, show_rate_max);
     func_po218->FixParameter(1, t_radon220);
     func_po218->FixParameter(2, measurement_offset_in_days);
-    if (show_Po218 == 1)
+    // if (show_Po218 == 1)
+    if (show_Po218)
         g_po218_rate->Fit(func_po218, "", "", fit_win_start_in_days, fit_win_end_in_days);
 
     double po212_rate_fit = func_po212->GetParameter(0);
@@ -717,13 +718,16 @@ int main(int argc, char **argv)
     lat.DrawLatex(live * .05, 0.9 * show_rate_max, Form("DATA:%s", infile.c_str()));
     lat.DrawLatex(live * .05, 0.82 * show_rate_max, Form("DETECTOR:RD%d", det_id + 1));
     lat.SetTextColor(col_Po214);
-    if (show_Po214 == 1)
+    // if (show_Po214 == 1)
+    if (show_Po214)
         lat.DrawLatex(live * .05, 0.74 * show_rate_max, Form("Po214: %.1f +- %.1f cpd.", po214_rate_fit, po214_rate_fit_err));
     lat.SetTextColor(col_Po218);
-    if (show_Po218 == 1)
+    // if (show_Po218 == 1)
+    if (show_Po218)
         lat.DrawLatex(live * .05, 0.66 * show_rate_max, Form("Po218: %.1f +- %.1f cpd.", po218_rate_fit, po218_rate_fit_err));
     lat.SetTextColor(col_Po212);
-    if (show_Po212 == 1)
+    // if (show_Po212 == 1)
+    if (show_Po212)
         lat.DrawLatex(live * .05, 0.58 * show_rate_max, Form("Po212: %.1f +- %.1f cpd.", po212_rate_fit, po212_rate_fit_err));
 
     c_rn->cd(3);
