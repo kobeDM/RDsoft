@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
-import subprocess, os,sys
+import subprocess, os, sys
+import re
 import argparse
 import time,datetime
 import json
@@ -17,12 +18,20 @@ def parser():
     opts=argparser.parse_args()
     return(opts)
 
+def get_sorted_numeric_dirs(path):
+    pattern = re.compile(r'^[0-9_]+$')
+    items = os.listdir(path)
+    numeric_dirs = [item for item in items if os.path.isdir(os.path.join(path, item)) and pattern.match(item)]
+
+    return sorted(numeric_dirs)
+
 RDSW=os.environ['RDSW']+'/'
 configfile='RD-monconfig.json'
 CONFIG_SOURCE=RDSW+'config/RD-monconfig.json'
 analyzerbin='bin/'
 rootmacrodir='root_macros'
 runRD_ana=RDSW+analyzerbin+'runRD-ana.py -b -f'
+img_dir='/var/www/html'
 
 batch_mode=0
 verbose=0
@@ -79,8 +88,8 @@ for detID in range (numofdet):
 
 # output the directories
 for detID in range (numofdet):
-    data_dir_list[detID]=data_dir_list[detID]
-    ana_dir_list[detID]=ana_dir_list[detID]
+    # data_dir_list[detID]=data_dir_list[detID]
+    # ana_dir_list[detID]=ana_dir_list[detID]
     print("  detector",detID,end=":")
     print(" name=",name_list[detID],end=",")
     print(" data_dir=",data_dir_list[detID],end=",")
@@ -95,12 +104,18 @@ client = InfluxDBClient( host     = json_load['influxdb']['host'],
     
 # runRD_ana
 while(True):
-    for detID in range (numofdet):
+    for detID in range(numofdet):
         cmd='cd '+ ana_dir_list[detID]+'; '+runRD_ana
         if(verbose):
             print("cmd:",cmd)
         proc=subprocess.run(cmd,shell=True)
         cmd='rsync -dq '+ ana_dir_list[detID]+'/rnmon/*/* '+mon_dir_list[detID]
+        if(verbose):
+            print("cmd:",cmd)
+        proc=subprocess.run(cmd,shell=True)
+        # print(ana_dir_list[detID])
+        latest_dir = get_sorted_numeric_dirs(ana_dir_list[detID])[-1]
+        cmd = 'cp ' + latest_dir + '/*.png' + ' ' + img_dir
         if(verbose):
             print("cmd:",cmd)
         proc=subprocess.run(cmd,shell=True)
