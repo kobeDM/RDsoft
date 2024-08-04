@@ -43,6 +43,8 @@
 
 int main(int argc, char **argv)
 {
+    std::cerr<<"## RD_rnrate.cpp ##"<<std::endl;
+
     int batch_switch = 0;
     int verbose = 0;
     int auto_fitrange = 0;
@@ -68,14 +70,14 @@ int main(int argc, char **argv)
         {
         case 'b':
             batch_switch = 1;
-            printf("-b option for batch mode\n");
+            printf("- Batch mode\n");
             break;
         case 'v':
-            printf("-v option for verbose mode\n");
+            printf("- Verbose mode\n");
             verbose = 1;
             break;
         case 'f':
-            printf("-f option for auto fit range\n");
+            printf("- Auto fiting mode\n");
             auto_fitrange = 1;
             break;
         default:
@@ -95,14 +97,14 @@ int main(int argc, char **argv)
     std::string conffilename = argv[2 + optind - 1];
 
     det_id = atoi(argv[3 + optind - 1]) - 1;
-    std::cout << "input file : " << infilename << std::endl;
-    std::cout << "config file : " << conffilename << std::endl;
-    std::cout << "detector: RD" << det_id + 1 << std::endl;
+    std::cout << "Input file: " << infilename << std::endl;
+    std::cout << "JSON config file: " << conffilename << std::endl;
+    std::cout << "Detector: RD" << det_id + 1 << std::endl;
 
     std::string::size_type index_conf = conffilename.find(".json");
     if (index_conf == std::string::npos)
     {
-        std::cout << "Config file open failure!!!" << std::endl;
+        std::cout << "Error: Config file cannot open !!!" << std::endl;
         return 1;
     }
 
@@ -157,11 +159,11 @@ int main(int argc, char **argv)
 
     if (verbose)
     {
-        std::cout << "Dynamic Range: " << dynamic_range << std::endl;
-        std::cout << "Sampling Rate: " << sampling_hertz << std::endl;
-        std::cout << "Sampling Number: " << sampling_number << std::endl;
-        std::cout << "Calibration Factor: " << cal_a[det_id] << std::endl;
-        std::cout << "run start: " << runstarttime << std::endl;
+        std::cout << "    Dynamic Range: " << dynamic_range << std::endl;
+        std::cout << "    Sampling Rate: " << sampling_hertz << std::endl;
+        std::cout << "    Sampling Number: " << sampling_number << std::endl;
+        std::cout << "    Calibration Factor: " << cal_a[det_id] << std::endl;
+        std::cout << "    Run Start: " << runstarttime << std::endl;
     }
 
     double tbin = time_win_hour / 24.; // days
@@ -183,9 +185,9 @@ int main(int argc, char **argv)
     TString vis_png = filename + "/vis.png";
 
     if (verbose)
-        std::cout << "ratefile: " << ratefilename << std::endl;
-    std::cout << "fitresfile: " << fitresfilename << std::endl;
-    std::cout << "imagefile: " << rnrate_png << std::endl;
+        std::cout << "Rate file: " << ratefilename << std::endl;
+    std::cout << "Fitres file: " << fitresfilename << std::endl;
+    std::cout << "Image file: " << rnrate_png << ", " << vis_png << std::endl;
     char tmpc[3][32];
 
     // TFile*
@@ -197,7 +199,7 @@ int main(int argc, char **argv)
     // Application
     TApplication app("app", &argc, argv);
     if (verbose)
-        std::cout << "--- application start ---" << std::endl;
+        std::cout << "--- Application start ---" << std::endl;
 
     // #################################
     //  input file
@@ -212,7 +214,7 @@ int main(int argc, char **argv)
     TFile *in_file = TFile::Open(infilename, "read");
     TTree *tree = (TTree *)in_file->Get("tree");
     if (verbose)
-        std::cout << "--- read input file ---" << std::endl;
+        std::cout << "--- Read input file ---" << std::endl;
     tree->SetBranchAddress("eventid", &eventid);
     tree->SetBranchAddress("timestamp", &timestamp);
     tree->SetBranchAddress("timestamp_usec", &timestamp_usec);
@@ -264,7 +266,7 @@ int main(int argc, char **argv)
     g_po218_rate->SetName("g_po218_rate");
 
     if (verbose)
-        std::cout << "--- SET HISTOGRAMs ---" << std::endl;
+        std::cout << "--- Set histograms ---" << std::endl;
 
     TLine *l_inte_s = new TLine(twin_avg[0] / sampling_hertz * 1e6, -0.5, twin_avg[0] / sampling_hertz * 1e6, 0.5);
     TLine *l_inte_e = new TLine(twin_avg[1] / sampling_hertz * 1e6, -0.5, twin_avg[1] / sampling_hertz * 1e6, 0.5);
@@ -324,7 +326,7 @@ int main(int argc, char **argv)
         po214_tdep[i] = po218_tdep[i] = po212_tdep[i] = 0;
     }
     if (verbose)
-        std::cout << "--- loop start ---" << std::endl;
+        std::cout << "--- Loop start ---" << std::endl;
     int ev_max = tree->GetEntries();
     for (int ev = 0; ev < ev_max; ev++)
     {
@@ -338,8 +340,8 @@ int main(int argc, char **argv)
             first_ev_time = timestamp;
             if (verbose)
             {
-                std::cout << "first_ev_time: " << first_ev_time << std::endl;
-                std::cout << "runstarttime: " << runstarttime << std::endl;
+                std::cout << "First event unixtime: " << first_ev_time << std::endl;
+                std::cout << "Run start unixtime: " << runstarttime << std::endl;
             }
             ev_start_time = timestamp;
             ev_end_time = timestamp_end;
@@ -391,10 +393,10 @@ int main(int argc, char **argv)
                 {
                     po218_tdep[thisbin]++;
                     po218_time[thisbin] = timestamp;
-                    if (verbose)
-                    {
-                        std::cout << "Po218\t" << thisbin << "\t" << E << "\t" << po218_tdep[thisbin] << "\t" << timestamp << "\t" << runstarttime << "\t" << timestamp - runstarttime << std::endl;
-                    }
+                    // if (verbose)
+                    // {
+                    //     std::cout << "Po218\t" << thisbin << "\t" << E << "\t" << po218_tdep[thisbin] << "\t" << timestamp << "\t" << runstarttime << "\t" << timestamp - runstarttime << std::endl;
+                    // }
                 }
                 if ((timestamp - runstarttime) / 60. / 60 / 24 > integ_win_start_in_days && (timestamp - runstarttime) / 60. / 60 / 24 < integ_win_end_in_days)
                 {
@@ -410,10 +412,10 @@ int main(int argc, char **argv)
                 {
                     po212_tdep[thisbin]++;
                     po212_time[thisbin] = timestamp;
-                    if (verbose)
-                    {
-                        std::cout << "Po212\t" << thisbin << "\t" << E << "\t" << po212_tdep[thisbin] << "\t" << timestamp << "\t" << runstarttime << "\t" << timestamp - runstarttime << std::endl;
-                    }
+                    // if (verbose)
+                    // {
+                    //     std::cout << "Po212\t" << thisbin << "\t" << E << "\t" << po212_tdep[thisbin] << "\t" << timestamp << "\t" << runstarttime << "\t" << timestamp - runstarttime << std::endl;
+                    // }
                 }
                 if ((timestamp - runstarttime) / 60. / 60 / 24 > integ_win_start_in_days && (timestamp - runstarttime) / 60. / 60 / 24 < integ_win_end_in_days)
                 {
@@ -429,10 +431,10 @@ int main(int argc, char **argv)
                 {
                     po214_tdep[thisbin]++;
                     po214_time[thisbin] = timestamp;
-                    if (verbose)
-                    {
-                        std::cout << "Po214\t" << thisbin << "\t" << E << "\t" << timestamp << "\t" << runstarttime << std::endl;
-                    }
+                    // if (verbose)
+                    // {
+                    //     std::cout << "Po214\t" << thisbin << "\t" << E << "\t" << timestamp << "\t" << runstarttime << std::endl;
+                    // }
                 }
                 if ((timestamp - runstarttime) / 60. / 60 / 24 > integ_win_start_in_days && (timestamp - runstarttime) / 60. / 60 / 24 < integ_win_end_in_days)
                 {
@@ -441,29 +443,28 @@ int main(int argc, char **argv)
             }
 
             // rate calc (previous event)
-            double rate;
-            if (timestamp == cut_after_time)
-            {
-                rate = 1e10;
-            }
-            else
-            {
-                rate = 1. / (timestamp - cut_after_time);
-            }
-            cut_after_time = ev_end_time;
-            if (ev % 10000 == 0)
-            {
-                std::cout << "Ev." << ev << "/" << ev_max << " | Rate : " << std::setprecision(10) << rate << "\t\t\r" << std::flush;
-            }
+            // double rate;
+            // if (timestamp == cut_after_time)
+            // {
+            //     rate = 1e10;
+            // }
+            // else
+            // {
+            //     rate = 1. / (timestamp - cut_after_time);
+            // }
+            // cut_after_time = ev_end_time;
+            // if (ev % 10000 == 0)
+            // {
+            //     std::cout << "Ev." << ev << "/" << ev_max << " | Rate : " << std::setprecision(10) << rate << "\t\t\r" << std::flush;
+            // }
         }
     }
     live = (ev_start_time - runstarttime) / 60. / 60 / 24; // days
 
     if (verbose)
-        std::cout << std::endl
-                  << "Live time : " << live << "days" << std::endl;
+        std::cout << "Live time: " << live << " days" << std::endl;
     if (verbose)
-        std::cout << "time bin : " << tbin << "days" << std::endl;
+        std::cout << "Time bin: " << tbin << " days" << std::endl;
 
     // graph fill and output
     for (int i = 0; i < live / tbin; i++)
@@ -477,7 +478,8 @@ int main(int argc, char **argv)
 
         if (verbose)
         {
-            std::cout << "bin" << i << "\t" << po212_tdep[i] / tbin << "\t" << po214_tdep[i] / tbin << "\t" << po218_tdep[i] / tbin << std::endl;
+            if (i == 0) std::cout << "# bin\tPo212\tPo214\tPo218" << std::endl;
+            std::cout << i << "\t" << po212_tdep[i] / tbin << "\t" << po214_tdep[i] / tbin << "\t" << po218_tdep[i] / tbin << std::endl;
         }
 
         t_temp = runstarttime + (i + 0.5) * tbin * 60 * 60 * 24;
@@ -678,7 +680,6 @@ int main(int argc, char **argv)
     TF1 *func_po212 = new TF1("func_po212", "[0]", fit_win_start_in_days, fit_win_end_in_days);
     func_po212->SetLineColor(col_Po212);
     func_po212->SetLineWidth(linewidth_rate);
-    // if (show_Po212 == 1)
     if (show_Po212)
         g_po212_rate->Fit(func_po212, "", "", fit_win_start_in_days, fit_win_end_in_days);
 
@@ -688,7 +689,6 @@ int main(int argc, char **argv)
     func_po214->SetParameter(0, show_rate_max);
     func_po214->FixParameter(1, t_radon220);
     func_po214->FixParameter(2, measurement_offset_in_days);
-    // if (show_Po214 == 1)
     if (show_Po214)
         g_po214_rate->Fit(func_po214, "", "", fit_win_start_in_days, fit_win_end_in_days);
 
@@ -698,7 +698,6 @@ int main(int argc, char **argv)
     func_po218->SetParameter(0, show_rate_max);
     func_po218->FixParameter(1, t_radon220);
     func_po218->FixParameter(2, measurement_offset_in_days);
-    // if (show_Po218 == 1)
     if (show_Po218)
         g_po218_rate->Fit(func_po218, "", "", fit_win_start_in_days, fit_win_end_in_days);
 
@@ -782,6 +781,7 @@ int main(int argc, char **argv)
 
     out_file_rate.open(ratefilename, std::ios::out);
     out_file_rate << po214_rate_sel << "\t" << po214_rate_sel_error << "\t" << po218_rate_sel << "\t" << po218_rate_sel_error << "\t" << po212_rate_sel << "\t" << po212_rate_sel_error << "\t" << live << std::endl;
+    // out_file_rate << po214_rate_fit << "\t" << po214_rate_fit_err << "\t" << po218_rate_fit << "\t" << po218_rate_fit_err << "\t" << po212_rate_fit << "\t" << po212_rate_fit_err << "\t" << live << std::endl;
     out_file_rate.close();
     out_file_rate.open(fitresfilename, std::ios::out);
     out_file_rate << "# po214_rate"

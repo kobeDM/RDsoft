@@ -41,28 +41,30 @@ RD_dat2root=RDSW+analyzerbin+'/RD_dat2root '
 RD_vis=RDSW+analyzerbin+'/RD_rnrate '
 chainmacro=RDSW+rootmacrodir+'/chain.cxx'
 
+print('####################')
 print('### run-RDana.py ###')
+print('####################')
 
 args = parser()
 
 if args.display:
     # switch for diaplay only    
-    print(" rate analysis and display (skip the dat2root and root-chain)")
+    print("- Display mode")
     display=1
 
 if args.batch:
     # switch for batch mode
-    print(" batch mode")
+    print("- Batch mode")
     batch_mode=1
 
 if args.chain:
-    # switch for from chain
-    print(" from chain")
+    # analyze from chain file
+    print("- Chain mode")
     chain_mode=1
 
 if args.verbose:
     # verbose
-    print(" verbose")
+    print("- Verbose mode")
     verbose=1
 
 if args.datadir:
@@ -71,24 +73,25 @@ if args.datadir:
 
 if args.fit:
     # auto fitting
-    print(" auto fitting")
+    print("- Auto fitting mode")
     auto_fitting=1
 
 
 if(args.subdir):
     subdir=args.subdir
 else:
+    # search the latest directory
     cmd='ls -ltrd '+ datadir +'/*/ | grep 20 | tail -1' 
     if(verbose):
-        print("cmd:",cmd)   
+        print("> Executing:",cmd)   
     proc=subprocess.run(cmd,shell=True, stdout=PIPE, stderr=PIPE)
     subdir=proc.stdout.decode().split(' ')[len(proc.stdout.decode().split(' '))-1]
-    if(verbose):
-        print("subdir:",subdir)   
     subdir=subdir.split('/')[len(proc.stdout.decode().split('/'))-2]
+    print(subdir)
+
 subdir=subdir.replace('\n','')+'/'
 if(verbose):
-    print("subdir:",subdir)   
+    print("Directory:",subdir.split('/')[0])
 
 if verbose:
     RD_dat2root=RD_dat2root+" -v "
@@ -113,24 +116,23 @@ if(args.tof!=None):
     file_to=args.tof
 else:
     cmd='ls -ltr '+ datadir+"/"+subdir +'*.dat | tail -1'
-    if(verbose):
-        print("cmd:",cmd)
+    # if(verbose):
+    #     print("> Executing:",cmd)
     proc=subprocess.run(cmd,shell=True, stdout=PIPE, stderr=PIPE)
     file_to=(int)((proc.stdout.decode().split(' ')[len(proc.stdout.decode().split(' '))-1]).split('/')[-1].replace('RD_', '').replace('.dat', ''))
 
 file_num=file_to-file_from+1
+if(verbose):
+    print('File: RD_'+str(file_from)+'.dat - RD_'+str(file_to)+'.dat ('+str(file_num)+' files.)')
 
 # detector check        
 cmd='pwd'
-if (verbose):
-    print('executing '+cmd)            
 proc=subprocess.run(cmd,shell=True, stdout=PIPE, stderr=PIPE)
 detector_id=proc.stdout.decode().split('RD')[len(proc.stdout.decode().split('RD'))-1].split('/')[0]
 detector='RD'+detector_id
 
-# analysis condtion display
-print(" files:"+format(file_from)+" - "+format(file_to))
-print(" detector: "+detector)
+if (verbose):
+    print("Detector:", detector)
 
 # config files
 daq_config_in=datadir+"/"+subdir+"RD.cnf"
@@ -143,37 +145,46 @@ elif (os.path.isfile(config_target)):
     configfile=config_target
 else:
     cmd=RD_mkconfig+" "+daq_config_in+" "+json_config_in+" "+config_target
-    if(verbose):
-        print("cmd:",cmd)
     subprocess.run(cmd,shell=True)
     configfile=config_target
 
 if(verbose):
-    print("config file:",configfile)
-    print('input file:',file_from,'-',file_to,'(',file_num,' files.)')
+    print('DAQ config file:',daq_config_in)
+    print('JSON config file:',json_config_in)
+
+print('===\n')
 
 # start from dat2root
 if(not display and not chain_mode):
     for file_id in range(file_from,file_to+1):
         infile='RD_'+format(file_id)
         infile_full=datadir+'/'+subdir+infile+'.dat '
-        if (verbose):
-            print(infile_full)
+
+        # RD_dat2root
         cmd=RD_dat2root+infile_full+configfile
         if (verbose):
-            print('executing '+cmd)
+            print('Converting '+infile_full+'to root file ...')
+            print('Executing:',cmd)
         subprocess.run(cmd,shell=True) 
         rootfile=rootdir+"/"+infile+'.root'
         visfile=infile+'_vis.root'
+
+        # rename
         cmd='mv out.root '+rootfile
+        print('---')
         if (verbose):
-            print('executing '+cmd)
+            print('Renaming out.root to '+rootfile)
+            print('Executing:',cmd)
         subprocess.run(cmd,shell=True)
-        # RD_vis batch mode
+        print('---')
+
+        # RD_rnrate
         cmd=RD_vis+' -b '+rootfile+' '+configfile+' '+detector_id
         if (verbose):
-            print('executing '+cmd)
+            print('Drawing vis file ...')
+            print('Executing:',cmd)
         subprocess.run(cmd,shell=True)
+        print('===\n')
 
 if (file_num>1):
     rootfiles=rootdir+"/RD_"+format(file_from)+'-'+format(file_to)+'.root'

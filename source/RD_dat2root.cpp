@@ -36,7 +36,7 @@
 int main(int argc, char** argv){
   int opt;
   int verbose=0;  
-  std::cerr<<"## dat2root ##"<<std::endl;
+  std::cerr<<"## RD_dat2root.cpp ##"<<std::endl;
   //command line parameters
   if(argc < 3){
     std::cout << "Usage :";
@@ -47,7 +47,7 @@ int main(int argc, char** argv){
   while ((opt = getopt(argc, argv, "v")) != -1) {
     switch (opt) {
     case 'v':
-      printf("-v option for verbose mode\n");
+      printf("- Verbose mode\n");
       verbose=1;
       break;
     }
@@ -58,16 +58,16 @@ int main(int argc, char** argv){
   //filenames
   std::string filename;
   std::string outfilename = "out.root";
-  std::cerr<<" input filename: "<<file<<std::endl;
-  std::cerr<<" output filename: "<<outfilename<<std::endl;   
+  std::cerr<<"Input file: "<<file<<std::endl;
+  std::cerr<<"Output file: "<<outfilename<<std::endl;   
   TFile* out_file = TFile::Open(outfilename.c_str(), "RECREATE");
 
 
   //json config file
-  std::cerr<<" config filename: "<<conffilename<<std::endl;
+  std::cerr<<"JSON config file: "<<conffilename<<std::endl;
   std::string::size_type index_conf = conffilename.find(".json");
   if( index_conf == std::string::npos ) { 
-    std::cout << "Failure!!!" << std::endl;
+    std::cout << "Error: Config file cannot open !!!" << std::endl;
     return 1;
   }
   boost::property_tree::ptree pt;
@@ -100,9 +100,9 @@ int main(int argc, char** argv){
   tree->Branch("wf", wf, "wf[1024]/F");
 
   if(verbose){
-    std::cerr<<" dynamic ragne: "<<dynamic_range <<" V"<<std::endl;
-    std::cerr<<" sampling rate: "<< sampling_helz<<" Hz"<<std::endl;
-    std::cerr<<" sampling length: "<< sampling_length<<""<<std::endl;
+    std::cerr<<"    dynamic ragne: "<<dynamic_range <<" V"<<std::endl;
+    std::cerr<<"    sampling rate: "<< sampling_helz<<" Hz"<<std::endl;
+    std::cerr<<"    sampling length: "<< sampling_length<<""<<std::endl;
   }
  
   std::ifstream ifs(file);
@@ -124,12 +124,12 @@ int main(int argc, char** argv){
     ifs >> buf>> buf_ts; 
     pos = buf_ts.find(".");
     timestamp_end = stoi(buf_ts.substr(0,pos));   
-    std::cerr<<"event: "<< eventid <<"\r"<<std::flush;
+    std::cerr<<"Event: "<< eventid <<"\r"<<std::flush;
     ev_thisfile++;
     tree->Fill();
   }
   live=timestamp_end-timestamp_start;
-  std::cerr<<eventid-eventid_start<<" events in "<<live<<" second"<<std::endl;
+  std::cerr<<eventid-eventid_start<<" events in "<<live<<" seconds."<<std::endl;
   tree->Write();
   out_file->Close();
   return 0;
