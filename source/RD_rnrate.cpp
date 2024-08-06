@@ -43,7 +43,7 @@
 
 int main(int argc, char **argv)
 {
-    std::cerr<<"## RD_rnrate.cpp ##"<<std::endl;
+    std::cerr << "## RD_rnrate.cpp ##" << std::endl;
 
     int batch_switch = 0;
     int verbose = 0;
@@ -185,9 +185,11 @@ int main(int argc, char **argv)
     TString vis_png = filename + "/vis.png";
 
     if (verbose)
+    {
         std::cout << "Rate file: " << ratefilename << std::endl;
-    std::cout << "Fitres file: " << fitresfilename << std::endl;
-    std::cout << "Image file: " << rnrate_png << ", " << vis_png << std::endl;
+        std::cout << "Fitres file: " << fitresfilename << std::endl;
+        std::cout << "Image file: " << rnrate_png << ", " << vis_png << std::endl;
+    }
     char tmpc[3][32];
 
     // TFile*
@@ -478,7 +480,8 @@ int main(int argc, char **argv)
 
         if (verbose)
         {
-            if (i == 0) std::cout << "# bin\tPo212\tPo214\tPo218" << std::endl;
+            if (i == 0)
+                std::cout << "# bin\tPo212\tPo214\tPo218" << std::endl;
             std::cout << i << "\t" << po212_tdep[i] / tbin << "\t" << po214_tdep[i] / tbin << "\t" << po218_tdep[i] / tbin << std::endl;
         }
 
@@ -499,7 +502,7 @@ int main(int argc, char **argv)
             out_file_212.open(monfilename_212, std::ios::out);
         }
         out_file_212 << tmpc[1] << " " << std::fixed << std::setprecision(2) << po212_tdep[i] / tbin << " " << pow(po212_tdep[i], 0.5) / tbin << std::endl;
-     
+
         // output Po214
         strftime(tmpc[0], sizeof(tmpc[0]), "%Y%m%d_po214.dat", ptm);
         monfilename_214 = tmpc[0];
@@ -514,7 +517,7 @@ int main(int argc, char **argv)
 
         // output Po218
         strftime(tmpc[0], sizeof(tmpc[0]), "%Y%m%d_po218.dat", ptm);
-     
+
         monfilename_218 = tmpc[0];
         monfilename_218 = mondir + monfilename_218;
         if (monfilename_218 != monfilename_last_218)
@@ -673,7 +676,7 @@ int main(int argc, char **argv)
     // if (show_Po218 == 1)
     if (show_Po218)
         g_po218_rate->Draw("p same");
-    if (auto_fitrange) 
+    if (auto_fitrange)
     {
         fit_win_end_in_days = live;
     }
