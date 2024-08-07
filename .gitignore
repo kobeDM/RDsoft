@@ -3,3 +3,4 @@ bin/*
 build/*
 source/RD_rnrate_org.cpp
 config/RD-anaconfig.json
+.vscode
