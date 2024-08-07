@@ -1,6 +1,6 @@
 //------------------------------------------------------------------
-// Read tree ad2_daq output data
-// Update: 07. July 2020
+// RD_rnrate.cpp
+// Update: 07. Aug. 2024 by R.Namai
 // Author: T.Shimada
 //------------------------------------------------------------------
 
@@ -37,9 +37,6 @@
 #include "TLatex.h"
 #include "TString.h"
 #include "TLine.h"
-// USER
-
-// #define ADC_BIT 1024 //10bit
 
 int main(int argc, char **argv)
 {
@@ -57,6 +54,7 @@ int main(int argc, char **argv)
 
     gStyle->SetPalette(kRainBow);
 
+    // check arguments
     if (argc < 3)
     {
         std::cout << "Usage:";
@@ -87,7 +85,7 @@ int main(int argc, char **argv)
     }
 
     if (verbose)
-        std::cout << "optind=" << optind << std::endl;
+        std::cout << "optind = " << optind << std::endl;
 
     std::string infile = argv[1 + optind - 1];
     std::string outfile_tmp;
@@ -138,7 +136,7 @@ int main(int argc, char **argv)
     cal_b[2] = pt.get<double>("ana.cal_factor_b_RD3");
 
     int twin = twin_avg_window_us * sampling_hertz / 1e6;
-    ;
+
     int twin_avg[2];
     twin_avg[0] = twin_avg_start_us * sampling_hertz / 1e6;
     twin_avg[1] = twin_avg[0] + twin;
@@ -159,11 +157,11 @@ int main(int argc, char **argv)
 
     if (verbose)
     {
-        std::cout << "    Dynamic Range: " << dynamic_range << std::endl;
-        std::cout << "    Sampling Rate: " << sampling_hertz << std::endl;
-        std::cout << "    Sampling Number: " << sampling_number << std::endl;
-        std::cout << "    Calibration Factor: " << cal_a[det_id] << std::endl;
-        std::cout << "    Run Start: " << runstarttime << std::endl;
+        std::cout << "    Dynamic Range      : " << dynamic_range << std::endl;
+        std::cout << "    Sampling Rate      : " << sampling_hertz << std::endl;
+        std::cout << "    Sampling Number    : " << sampling_number << std::endl;
+        std::cout << "    Calibration Factor : " << cal_a[det_id] << std::endl;
+        std::cout << "    Run Start          : " << runstarttime << std::endl;
     }
 
     double tbin = time_win_hour / 24.; // days
@@ -327,8 +325,12 @@ int main(int argc, char **argv)
     {
         po214_tdep[i] = po218_tdep[i] = po212_tdep[i] = 0;
     }
+
     if (verbose)
+    {
         std::cout << "--- Loop start ---" << std::endl;
+    }
+
     int ev_max = tree->GetEntries();
     for (int ev = 0; ev < ev_max; ev++)
     {
@@ -355,21 +357,27 @@ int main(int argc, char **argv)
             ev_end_time = timestamp_end;
             dead_time += timestamp * 1e6 + timestamp_usec - (timestamp_end * 1e6 + timestamp_usec_end);
         }
+
+        // calculate waveform offset
         offset = 0;
         for (int i = twin_avg[0]; i < twin_avg[1]; i++)
         {
             offset += wf[i] / twin;
         }
+
         for (int samp = 0; samp < sampling_number; samp++)
         {
             volt = wf[samp];
             if (volt < veto_neg)
             {
-                veto = 1;
+                veto = 1; // veto under threshold
             }
             if (volt > volt_max)
+            {
                 volt_max = volt;
+            }
         }
+
         E = cal_a[det_id] * (volt_max - offset) + cal_b[det_id];
 
         // Fill
@@ -377,7 +385,9 @@ int main(int argc, char **argv)
         {
             h_wf->Fill(samp / sampling_hertz * 1e6, wf[samp]);
         }
+
         h_ph_nc->Fill(volt_max - offset);
+
         if (veto == 0)
         {
             thisbin = int((timestamp - runstarttime) / 60. / 60 / 24 / tbin);
@@ -395,10 +405,6 @@ int main(int argc, char **argv)
                 {
                     po218_tdep[thisbin]++;
                     po218_time[thisbin] = timestamp;
-                    // if (verbose)
-                    // {
-                    //     std::cout << "Po218\t" << thisbin << "\t" << E << "\t" << po218_tdep[thisbin] << "\t" << timestamp << "\t" << runstarttime << "\t" << timestamp - runstarttime << std::endl;
-                    // }
                 }
                 if ((timestamp - runstarttime) / 60. / 60 / 24 > integ_win_start_in_days && (timestamp - runstarttime) / 60. / 60 / 24 < integ_win_end_in_days)
                 {
@@ -414,10 +420,6 @@ int main(int argc, char **argv)
                 {
                     po212_tdep[thisbin]++;
                     po212_time[thisbin] = timestamp;
-                    // if (verbose)
-                    // {
-                    //     std::cout << "Po212\t" << thisbin << "\t" << E << "\t" << po212_tdep[thisbin] << "\t" << timestamp << "\t" << runstarttime << "\t" << timestamp - runstarttime << std::endl;
-                    // }
                 }
                 if ((timestamp - runstarttime) / 60. / 60 / 24 > integ_win_start_in_days && (timestamp - runstarttime) / 60. / 60 / 24 < integ_win_end_in_days)
                 {
@@ -433,50 +435,52 @@ int main(int argc, char **argv)
                 {
                     po214_tdep[thisbin]++;
                     po214_time[thisbin] = timestamp;
-                    // if (verbose)
-                    // {
-                    //     std::cout << "Po214\t" << thisbin << "\t" << E << "\t" << timestamp << "\t" << runstarttime << std::endl;
-                    // }
                 }
                 if ((timestamp - runstarttime) / 60. / 60 / 24 > integ_win_start_in_days && (timestamp - runstarttime) / 60. / 60 / 24 < integ_win_end_in_days)
                 {
                     h_po214_sel->Fill(E);
                 }
             }
-
-            // rate calc (previous event)
-            // double rate;
-            // if (timestamp == cut_after_time)
-            // {
-            //     rate = 1e10;
-            // }
-            // else
-            // {
-            //     rate = 1. / (timestamp - cut_after_time);
-            // }
-            // cut_after_time = ev_end_time;
-            // if (ev % 10000 == 0)
-            // {
-            //     std::cout << "Ev." << ev << "/" << ev_max << " | Rate : " << std::setprecision(10) << rate << "\t\t\r" << std::flush;
-            // }
         }
     }
+
     live = (ev_start_time - runstarttime) / 60. / 60 / 24; // days
 
     if (verbose)
+    {
         std::cout << "Live time: " << live << " days" << std::endl;
+    }
     if (verbose)
+    {
         std::cout << "Time bin: " << tbin << " days" << std::endl;
+    }
 
     // graph fill and output
     for (int i = 0; i < live / tbin; i++)
     {
-        g_po212_rate->SetPoint(i, (i + 0.5) * tbin, po212_tdep[i] / tbin);
-        g_po212_rate->SetPointError(i, tbin / 2, pow(po212_tdep[i], 0.5) / tbin);
-        g_po214_rate->SetPoint(i, (i + 0.5) * tbin, po214_tdep[i] / tbin);
-        g_po214_rate->SetPointError(i, tbin / 2, pow(po214_tdep[i], 0.5) / tbin);
-        g_po218_rate->SetPoint(i, (i + 0.5) * tbin, po218_tdep[i] / tbin);
-        g_po218_rate->SetPointError(i, tbin / 2, pow(po218_tdep[i], 0.5) / tbin);
+        double bin = (i + 0.5) * tbin;
+        double bin_error = tbin / 2;
+        double po212_rate = po212_tdep[i] / tbin;
+        double po214_rate = po214_tdep[i] / tbin;
+        double po218_rate = po218_tdep[i] / tbin;
+        double po212_rate_error = sqrt(po212_tdep[i]) / tbin;
+        double po214_rate_error = sqrt(po214_tdep[i]) / tbin;
+        double po218_rate_error = sqrt(po218_tdep[i]) / tbin;
+        if (i == int(live))
+        {
+            po212_rate = po212_rate / (live - int(live)) * tbin;
+            po214_rate = po214_rate / (live - int(live)) * tbin;
+            po218_rate = po218_rate / (live - int(live)) * tbin;
+            po212_rate_error = po212_rate_error / (live - int(live)) * tbin;
+            po214_rate_error = po214_rate_error / (live - int(live)) * tbin;
+            po218_rate_error = po218_rate_error / (live - int(live)) * tbin;
+        }
+        g_po212_rate->SetPoint(i, bin, po212_rate);
+        g_po212_rate->SetPointError(i, bin_error, po212_rate_error);
+        g_po214_rate->SetPoint(i, bin, po214_rate);
+        g_po214_rate->SetPointError(i, bin_error, po214_rate_error);
+        g_po218_rate->SetPoint(i, bin, po218_rate);
+        g_po218_rate->SetPointError(i, bin_error, po218_rate_error);
 
         if (verbose)
         {
@@ -667,24 +671,30 @@ int main(int argc, char **argv)
     g_po218_rate->SetMarkerSize(markersize_rate);
     g_po218_rate->SetLineWidth(linewidth_rate);
     g_po218_rate->SetMarkerStyle(markerstyle_rate);
-    // if (show_Po212 == 1)
     if (show_Po212)
+    {
         g_po212_rate->Draw("p same");
-    // if (show_Po214 == 1)
+    }
     if (show_Po214)
+    {
         g_po214_rate->Draw("p same");
-    // if (show_Po218 == 1)
+    }
     if (show_Po218)
+    {
         g_po218_rate->Draw("p same");
+    }
+
     if (auto_fitrange)
     {
-        fit_win_end_in_days = live;
+        fit_win_end_in_days = int(live) + 1;
     }
     TF1 *func_po212 = new TF1("func_po212", "[0]", fit_win_start_in_days, fit_win_end_in_days);
     func_po212->SetLineColor(col_Po212);
     func_po212->SetLineWidth(linewidth_rate);
     if (show_Po212)
+    {
         g_po212_rate->Fit(func_po212, "", "", fit_win_start_in_days, fit_win_end_in_days);
+    }
 
     TF1 *func_po214 = new TF1("func_po214", "[0]*(1-exp(-(x+[2])/[1]))", fit_win_start_in_days, fit_win_end_in_days);
     func_po214->SetLineColor(col_Po214);
@@ -693,7 +703,9 @@ int main(int argc, char **argv)
     func_po214->FixParameter(1, t_radon220);
     func_po214->FixParameter(2, measurement_offset_in_days);
     if (show_Po214)
+    {
         g_po214_rate->Fit(func_po214, "", "", fit_win_start_in_days, fit_win_end_in_days);
+    }
 
     TF1 *func_po218 = new TF1("func_po218", "[0]*(1-exp(-(x+[2])/[1]))", fit_win_start_in_days, fit_win_end_in_days);
     func_po218->SetLineColor(kAzure + 1);
@@ -702,7 +714,9 @@ int main(int argc, char **argv)
     func_po218->FixParameter(1, t_radon220);
     func_po218->FixParameter(2, measurement_offset_in_days);
     if (show_Po218)
+    {
         g_po218_rate->Fit(func_po218, "", "", fit_win_start_in_days, fit_win_end_in_days);
+    }
 
     double po212_rate_fit = func_po212->GetParameter(0);
     double po212_rate_fit_err = func_po212->GetParError(0);
