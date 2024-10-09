@@ -14,8 +14,8 @@ def parser():
     opts=argparser.parse_args()
     return(opts)
 
-HOME=os.environ['HOME']+'/'
-CONFIG_DEFAULT=HOME+'RDsoft/config/RD-anaconfig.json'
+RDSW=os.environ['RDSW']+'/'
+CONFIG_DEFAULT=RDSW+'config/RD-anaconfig.json'
 
 keys_DAQ=["SAMPLING RATE","SAMPLING NUMBER","DYNAMIC RANGE","TRIGGER THRESHOLD CH1","RUN START","RUN END"] # find in the DAQ config
 json_ana_out={}
