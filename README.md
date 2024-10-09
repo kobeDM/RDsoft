@@ -6,6 +6,8 @@ Detail info. will be found here: https://ppwww.phys.sci.kobe-u.ac.jp/~newage/wik
 $ cd ~/
 $ git clone https://github.com/kobeDM/RDsoft
 
+##requires boost
+$ sudo apt install libboost-dev
 
 ## DAQ
 ### setup
