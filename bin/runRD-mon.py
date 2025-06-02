@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 
-import subprocess, os, sys
+import os
+import subprocess
 import re
 import argparse
-import time,datetime
+import time
+import datetime
 import json
 import numpy as np
 from subprocess import PIPE
@@ -31,9 +33,9 @@ RDSW          = os.environ['RDSW'] + '/'
 configfile    = 'RD-monconfig.json'
 CONFIG_SOURCE = RDSW + 'config/RD-monconfig.json'
 analyzerbin   = 'bin/'
-rootmacrodir  = 'root_macros'
+# rootmacrodir  = 'root_macros'
 runRD_ana     = RDSW + analyzerbin + 'runRD-ana.py -b -f'
-img_dir       = '/var/www/html'
+# img_dir       = '/var/www/html'
 
 batch_mode   = 0
 verbose      = 0
@@ -117,12 +119,13 @@ while(True):
             print("cmd: ", cmd)
         proc=subprocess.run(cmd,shell=True)
 
-        # send images to image directory
+        # send images to grafana server
         latest_dir = get_sorted_numeric_dirs(ana_dir_list[detID])[-1]
-        cmd = 'cp ' + latest_dir + '/*.png ' + img_dir
+        cmd = "rsync -avz --include='*.png' --exclude='*' -e 'ssh -o StrictHostKeyChecking=no' " + latest_dir + "/ " + json_load['grafana']['hostuser'] + "@" + json_load['grafana']['host'] + ":" + json_load['grafana']['img_dir']
         if(verbose):
             print("cmd: ", cmd)
         proc=subprocess.run(cmd,shell=True)
+
 
     print("## monitor update ##")
     for detID in range (numofdet):
