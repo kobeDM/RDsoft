@@ -1,6 +1,5 @@
 //------------------------------------------------------------------
 // RD_rnrate.cpp
-// Update: 07. Aug. 2024 by R.Namai
 // Author: T.Shimada
 //------------------------------------------------------------------
 
@@ -37,11 +36,17 @@
 #include "TLatex.h"
 #include "TString.h"
 #include "TLine.h"
+// Style
+#include "shStyle.h"
 
 int main(int argc, char **argv)
 {
     std::cerr << "## RD_rnrate.cpp ##" << std::endl;
 
+    SetShStyle();
+    // gStyle->SetOptStat(0);
+
+    // parameters
     int batch_switch = 0;
     int verbose = 0;
     int auto_fitrange = 0;
@@ -68,14 +73,14 @@ int main(int argc, char **argv)
         {
         case 'b':
             batch_switch = 1;
-            printf("- Batch mode\n");
+            printf("- Batch mode.\n");
             break;
         case 'v':
-            printf("- Verbose mode\n");
+            printf("- Verbose mode.\n");
             verbose = 1;
             break;
         case 'f':
-            printf("- Auto fiting mode\n");
+            printf("- Setting fit range automatically.\n");
             auto_fitrange = 1;
             break;
         default:
@@ -127,6 +132,7 @@ int main(int argc, char **argv)
     double measurement_offset_in_days = pt.get<double>("ana.measurement_offset_in_days");
     double fit_win_start_in_days = pt.get<double>("ana.fit_win_start_in_days");
     double fit_win_end_in_days = pt.get<double>("ana.fit_win_end_in_days");
+    double charge_threshold = pt.get<double>("ana.charge_threshold");
     double cal_a[3], cal_b[3];
     cal_a[0] = pt.get<double>("ana.cal_factor_a_RD1");
     cal_a[1] = pt.get<double>("ana.cal_factor_a_RD2");
@@ -227,21 +233,31 @@ int main(int argc, char **argv)
     // ##############################
     TH1D *h_ph = new TH1D("h_ph", "h_ph", spbin, spmin, spmax);
     TH1D *h_ph_nc = new TH1D("h_ph_nc", "h_ph_nc", spbin, spmin, spmax);
-    h_ph->GetXaxis()->SetTitle("pulse height(V)");
-    h_ph->GetYaxis()->SetTitle("counts");
+    h_ph->SetTitle("Pulse height");
+    h_ph->GetXaxis()->SetTitle("Pulse height(V)");
+    h_ph->GetYaxis()->SetTitle("Counts");
     h_ph->SetLineColor(2);
-    h_ph_nc->GetXaxis()->SetTitle("pulse height(V)");
-    h_ph_nc->GetYaxis()->SetTitle("counts");
+    h_ph_nc->SetTitle("Pulse height");
+    h_ph_nc->GetXaxis()->SetTitle("Pulse height(V)");
+    h_ph_nc->GetYaxis()->SetTitle("Counts");
     h_ph_nc->SetLineColor(4);
-    TH1D *h_q = new TH1D("h_q", "h_q", spbin, -dynamic_range * 100, dynamic_range * 100);
-    h_q->GetXaxis()->SetTitle("charge");
-    h_q->GetYaxis()->SetTitle("counts");
-    TH2D *h_ph_q = new TH2D("h_ph_q", "h_ph_q", spbin, -dynamic_range, dynamic_range, spbin, -dynamic_range * 100, dynamic_range * 100);
-    h_ph_q->GetXaxis()->SetTitle("pulse height (V)");
-    h_ph_q->GetYaxis()->SetTitle("charge");
+    TH1D *h_q = new TH1D("h_q", "h_q", spbin, -dynamic_range * 10, dynamic_range * 10);
+    h_q->SetTitle("Area");
+    h_q->GetXaxis()->SetTitle("Area");
+    h_q->GetYaxis()->SetTitle("Counts");
+    TH2D *h_ph_q = new TH2D("h_ph_q", "h_ph_q", spbin, -dynamic_range, dynamic_range, spbin, -dynamic_range * 10., dynamic_range * 10.);
+    TGraph *tg_ph_q = new TGraph();
+    tg_ph_q->SetTitle("Pulse height vs. Area");
+    tg_ph_q->GetXaxis()->SetTitle("Pulse height (V)");
+    tg_ph_q->GetYaxis()->SetTitle("Area");
+    TGraph *tg_ph_q_veto = new TGraph();
+    h_ph_q->SetTitle("Pulse height vs. Area");
+    h_ph_q->GetXaxis()->SetTitle("Pulse height (V)");
+    h_ph_q->GetYaxis()->SetTitle("Charge");
     TH2D *h_wf = new TH2D("h_wf", "h_wf", sampling_number, 0, (double)sampling_number / sampling_hertz * 1e6, spbin, -dynamic_range, dynamic_range);
-    h_wf->GetXaxis()->SetTitle("us");
-    h_wf->GetYaxis()->SetTitle("volt");
+    h_wf->SetTitle("Waveform");
+    h_wf->GetXaxis()->SetTitle("#musec.");
+    h_wf->GetYaxis()->SetTitle("Voltage (V)");
     TH1D *h_ene = new TH1D("h_ene", "h_ene", spMbin, spMmin, spMmax);
     TH1D *h_poraw = new TH1D("h_poraw", "h_poraw", spMbin, spMmin, spMmax);
     TH1D *h_po212 = new TH1D("h_po212", "h_po212", spMbin, spMmin, spMmax);
@@ -286,7 +302,7 @@ int main(int argc, char **argv)
     double dead_time = 0;
     double real = 0;
     double ev_end_time;
-    double ev_start_time;
+    Long64_t ev_start_time;
     double cut_after_time;
     double po214_ev_time;
     int count_po214_ev = 0;
@@ -319,6 +335,7 @@ int main(int argc, char **argv)
     double charge = 0;
     double veto_neg = neg_veto_factor * daq_Vth;
     double Eth_MeV = 2.0;
+    double volt_sum = 0.;
 
     struct tm *ptm;
     for (int i = 0; i < binmax; i++)
@@ -332,6 +349,7 @@ int main(int argc, char **argv)
     }
 
     int ev_max = tree->GetEntries();
+    Long64_t lastTimeStamp = 0.0;
     for (int ev = 0; ev < ev_max; ev++)
     {
         tree->GetEntry(ev);
@@ -347,16 +365,12 @@ int main(int argc, char **argv)
                 std::cout << "First event unixtime: " << first_ev_time << std::endl;
                 std::cout << "Run start unixtime: " << runstarttime << std::endl;
             }
-            ev_start_time = timestamp;
-            ev_end_time = timestamp_end;
-            dead_time += timestamp * 1e6 + timestamp_usec - (timestamp_end * 1e6 + timestamp_usec_end);
         }
-        else
-        {
-            ev_start_time = timestamp;
-            ev_end_time = timestamp_end;
-            dead_time += timestamp * 1e6 + timestamp_usec - (timestamp_end * 1e6 + timestamp_usec_end);
-        }
+        ev_start_time = timestamp;
+        if (ev_start_time > lastTimeStamp)
+            lastTimeStamp = ev_start_time;
+        ev_end_time = timestamp_end;
+        dead_time += timestamp * 1e6 + timestamp_usec - (timestamp_end * 1e6 + timestamp_usec_end);
 
         // calculate waveform offset
         offset = 0;
@@ -364,6 +378,15 @@ int main(int argc, char **argv)
         {
             offset += wf[i] / twin;
         }
+
+        volt_sum = 0.;
+        // calcutate adc-sum
+        for (int i = 0; i < sampling_number; i++)
+        {
+            volt_sum += wf[i] - offset;
+        }
+        // std::cout << wf[0] << "\t" << offset << "\t" << volt_sum << std::endl;
+        if (volt_sum < charge_threshold) veto = 1;
 
         for (int samp = 0; samp < sampling_number; samp++)
         {
@@ -383,7 +406,8 @@ int main(int argc, char **argv)
         // Fill
         for (int samp = 0; samp < sampling_number; samp++)
         {
-            h_wf->Fill(samp / sampling_hertz * 1e6, wf[samp]);
+            if (veto == 0)
+                h_wf->Fill(samp / sampling_hertz * 1e6, wf[samp]);
         }
 
         h_ph_nc->Fill(volt_max - offset);
@@ -392,8 +416,9 @@ int main(int argc, char **argv)
         {
             thisbin = int((timestamp - runstarttime) / 60. / 60 / 24 / tbin);
             h_ph->Fill(volt_max - offset);
-            h_q->Fill(charge);
-            h_ph_q->Fill(volt_max - offset, charge);
+            h_q->Fill(volt_sum);
+            h_ph_q->Fill(volt_max - offset, volt_sum);
+            tg_ph_q->SetPoint(tg_ph_q->GetN(), volt_max - offset, volt_sum);
             if (E > Eth_MeV)
                 h_ene->Fill(E);
 
@@ -442,9 +467,20 @@ int main(int argc, char **argv)
                 }
             }
         }
+        else
+        {
+            tg_ph_q_veto->SetPoint(tg_ph_q_veto->GetN(), volt_max - offset, volt_sum);
+        }
     }
 
-    live = (ev_start_time - runstarttime) / 60. / 60 / 24; // days
+    // live = (ev_start_time - runstarttime) / 60. / 60 / 24; // days
+    live = (lastTimeStamp - runstarttime) / 60. / 60 / 24; // days
+
+    if (verbose)
+    {
+        std::cout << lastTimeStamp << std::endl;
+        std::cout << runstarttime << std::endl;
+    }
 
     if (verbose)
     {
@@ -547,7 +583,8 @@ int main(int argc, char **argv)
     ptext[3]->AddText(Form("cal_a: %.1lf(MeV/V)", cal_a[det_id]));
     ptext[4]->AddText(Form("cal_b: %.1lf(MeV)", cal_b[det_id]));
     ptext[5]->AddText(Form("Live-time: %lf(days)", live));
-    ptext[6]->AddText(Form("negative veto %.2lf V", veto_neg));
+    ptext[6]->AddText(Form("Negative veto %.2lf V", veto_neg));
+    ptext[7]->AddText(Form("Area veto %.2lf", charge_threshold));
     if (verbose)
         std::cout << "--- config panel set ---" << std::endl;
 
@@ -577,6 +614,7 @@ int main(int argc, char **argv)
     double po218_rate_sel_error = sqrt(double(h_po218_sel->Integral())) / (integ_win_end_in_days - integ_win_start_in_days);
 
     // scaling
+    h_ene->SetTitle("Energy spectrum");
     h_ene->GetXaxis()->SetTitle("MeV");
     h_ene->GetYaxis()->SetTitle("counts/MeV/day");
     h_ene->Sumw2();
@@ -586,6 +624,7 @@ int main(int argc, char **argv)
     //  c_vis
     // #############################
     TCanvas *c_vis = new TCanvas("c_vis", "c_vis", 1000, 600);
+    c_vis->SetGrid();
     c_vis->Divide(3, 2);
     c_vis->cd(1);
     for (int i = 0; i < 8; i++)
@@ -601,10 +640,29 @@ int main(int argc, char **argv)
     c_vis->cd(3);
     h_ph_nc->Draw();
     h_ph->Draw("same");
+    TLegend *leg_h_ph = new TLegend(0.50, 0.75, 0.70, 0.85);
+    leg_h_ph->SetFillColor(0);
+    leg_h_ph->SetFillStyle(0);
+    leg_h_ph->AddEntry(h_ph_nc, "all", "f");
+    leg_h_ph->AddEntry(h_ph, "cut", "f");
+    leg_h_ph->Draw();
     c_vis->cd(4);
     h_ph_q->GetXaxis()->SetRangeUser(0, dynamic_range);
     h_ph_q->GetYaxis()->SetRangeUser(0, dynamic_range * 100);
-    h_ph_q->Draw("colz");
+    // h_ph_q->Draw("colz");
+    tg_ph_q->SetMarkerColor(2);
+    tg_ph_q_veto->SetMarkerColor(4);
+    tg_ph_q->SetMarkerSize(2);
+    tg_ph_q_veto->SetMarkerSize(1);
+    tg_ph_q->GetYaxis()->SetRangeUser(0, dynamic_range * 10);
+    tg_ph_q->Draw("AP");
+    tg_ph_q_veto->Draw("P");
+    TLegend *leg_ph_q = new TLegend(0.15, 0.75, 0.35, 0.85);
+    leg_ph_q->SetFillColor(0);
+    leg_ph_q->SetFillStyle(0);
+    leg_ph_q->AddEntry(tg_ph_q, "all", "p");
+    leg_ph_q->AddEntry(tg_ph_q_veto, "cut", "p");
+    leg_ph_q->Draw();
     c_vis->cd(5);
     h_ene->Draw("hist e");
     c_vis->cd(6);
@@ -654,6 +712,7 @@ int main(int argc, char **argv)
     lat.DrawLatex(labelposx, 0.8 * h_poraw->GetMaximum(), Form("DETECTOR: RD%d", det_id + 1));
     lat.DrawLatex(labelposx, 0.7 * h_poraw->GetMaximum(), Form("cal_a: %.2lf", cal_a[det_id]));
     lat.DrawLatex(labelposx, 0.6 * h_poraw->GetMaximum(), Form("live time: %.2f days", live));
+    lat.DrawLatex(labelposx, 0.5 * h_poraw->GetMaximum(), Form("Area veto: %.2f", charge_threshold));
     c_rn->cd(2);
     c_rn->DrawFrame(0, 0, live * 1.1, show_rate_max, "Rn Rate;time(day);counts/day");
     g_po212_rate->SetLineColor(col_Po212);
