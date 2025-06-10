@@ -52,6 +52,8 @@ def check_detector_id(path):
     print('Detector:', detector)
     return detector_id
 
+# -- main ---
+
 def main():
     print("### combine.py start ###")
     args = parse_args()
