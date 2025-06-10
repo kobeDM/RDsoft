@@ -13,7 +13,7 @@
     "ene_win_upper": 0,
     "ene_win_lower": 3,
     "time_win_minute": 10,
-    "time_win_hour": 24,
+    "time_win_hour": 6,
     "measurement_offset_in_days": 0.0,
     "integ_win_start_in_days": 0.0,
     "integ_win_end_in_days": 50.0,
@@ -38,6 +38,6 @@
     "SAMPLING NUMBER": "1024",
     "DYNAMIC RANGE": 2.5,
     "TRIGGER THRESHOLD CH1": "0.100",
-    "RUN START": "1698127455.709854"
+    "RUN START": "1690251135.826697"
   }
 }
