@@ -19,7 +19,8 @@
     "integ_win_end_in_days": 50.0,
     "fit_win_start_in_days": 0.0,
     "fit_win_end_in_days": 50.0,
-    "charge_threshold": 0.0
+    "area_threshold": 0.0,
+    "pulse_height_threshold": 0.0
   },
   "view": {
     "show_Po214": 1,

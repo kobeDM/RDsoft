@@ -132,7 +132,8 @@ int main(int argc, char **argv)
     double measurement_offset_in_days = pt.get<double>("ana.measurement_offset_in_days");
     double fit_win_start_in_days = pt.get<double>("ana.fit_win_start_in_days");
     double fit_win_end_in_days = pt.get<double>("ana.fit_win_end_in_days");
-    double charge_threshold = pt.get<double>("ana.charge_threshold");
+    double area_threshold = pt.get<double>("ana.area_threshold");
+    double pulse_height_threshold = pt.get<double>("ana.pulse_height_threshold");
     double cal_a[3], cal_b[3];
     cal_a[0] = pt.get<double>("ana.cal_factor_a_RD1");
     cal_a[1] = pt.get<double>("ana.cal_factor_a_RD2");
@@ -386,7 +387,6 @@ int main(int argc, char **argv)
             volt_sum += wf[i] - offset;
         }
         // std::cout << wf[0] << "\t" << offset << "\t" << volt_sum << std::endl;
-        if (volt_sum < charge_threshold) veto = 1;
 
         for (int samp = 0; samp < sampling_number; samp++)
         {
@@ -399,6 +399,17 @@ int main(int argc, char **argv)
             {
                 volt_max = volt;
             }
+        }
+
+        // apply area threshold
+        if (volt_sum < area_threshold)
+        {
+            veto = 1;
+        }
+        // apply pulse height threshold
+        if (volt_max < pulse_height_threshold)
+        {
+            veto = 1;
         }
 
         E = cal_a[det_id] * (volt_max - offset) + cal_b[det_id];
@@ -572,10 +583,10 @@ int main(int argc, char **argv)
     // ##############################
     //  config panel
     // ##############################
-    TPaveText *ptext[8];
-    for (int i = 0; i < 8; i++)
+    TPaveText *ptext[9];
+    for (int i = 0; i < 9; i++)
     {
-        ptext[7 - i] = new TPaveText(.05, i * 0.1 + 0.1, .95, i * 0.1 + 0.2);
+        ptext[8 - i] = new TPaveText(.05, i * 0.1 + 0.05, .95, i * 0.1 + 0.15);
     }
     ptext[0]->AddText("config");
     ptext[1]->AddText(Form("DATA: %s", infile.c_str()));
@@ -583,8 +594,9 @@ int main(int argc, char **argv)
     ptext[3]->AddText(Form("cal_a: %.1lf(MeV/V)", cal_a[det_id]));
     ptext[4]->AddText(Form("cal_b: %.1lf(MeV)", cal_b[det_id]));
     ptext[5]->AddText(Form("Live-time: %lf(days)", live));
-    ptext[6]->AddText(Form("Negative veto %.2lf V", veto_neg));
-    ptext[7]->AddText(Form("Area veto %.2lf", charge_threshold));
+    ptext[6]->AddText(Form("Negative veto: %.2lf V", veto_neg));
+    ptext[7]->AddText(Form("Area threshold: %.2lf", area_threshold));
+    ptext[8]->AddText(Form("Pulse height threshold: %.2lf V", pulse_height_threshold));
     if (verbose)
         std::cout << "--- config panel set ---" << std::endl;
 
@@ -627,7 +639,7 @@ int main(int argc, char **argv)
     c_vis->SetGrid();
     c_vis->Divide(3, 2);
     c_vis->cd(1);
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 9; i++)
     {
         ptext[i]->Draw();
     }
@@ -706,13 +718,16 @@ int main(int argc, char **argv)
     if (show_Po218 == 1)
         h_po218_sel->Draw("hist same");
     TLatex lat;
-    lat.SetTextSize(0.06);
+
+    lat.SetTextSize(0.04);
     float labelposx = spMmin + .05 * (spMmax - spMmin);
-    lat.DrawLatex(labelposx, 0.9 * h_poraw->GetMaximum(), Form("DATA: %s", infile.c_str()));
-    lat.DrawLatex(labelposx, 0.8 * h_poraw->GetMaximum(), Form("DETECTOR: RD%d", det_id + 1));
-    lat.DrawLatex(labelposx, 0.7 * h_poraw->GetMaximum(), Form("cal_a: %.2lf", cal_a[det_id]));
-    lat.DrawLatex(labelposx, 0.6 * h_poraw->GetMaximum(), Form("live time: %.2f days", live));
-    lat.DrawLatex(labelposx, 0.5 * h_poraw->GetMaximum(), Form("Area veto: %.2f", charge_threshold));
+    lat.DrawLatex(labelposx, 0.90 * h_poraw->GetMaximum(), Form("DATA: %s", infile.c_str()));
+    lat.DrawLatex(labelposx, 0.85 * h_poraw->GetMaximum(), Form("DETECTOR: RD%d", det_id + 1));
+    lat.DrawLatex(labelposx, 0.80 * h_poraw->GetMaximum(), Form("cal_a: %.2lf", cal_a[det_id]));
+    lat.DrawLatex(labelposx, 0.75 * h_poraw->GetMaximum(), Form("live time: %.2f days", live));
+    lat.DrawLatex(labelposx, 0.70 * h_poraw->GetMaximum(), Form("Area threshold: %.2f", area_threshold));
+    lat.DrawLatex(labelposx, 0.65 * h_poraw->GetMaximum(), Form("Pulse height threshold: %.1f", pulse_height_threshold));
+
     c_rn->cd(2);
     c_rn->DrawFrame(0, 0, live * 1.1, show_rate_max, "Rn Rate;time(day);counts/day");
     g_po212_rate->SetLineColor(col_Po212);
