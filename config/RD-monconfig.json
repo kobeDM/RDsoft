@@ -40,6 +40,7 @@
         "hostPC": "na16"
 	},
 	    "grafana": {
+		"activate": true,
         "hostuser": "msgc",
         "host": "10.37.0.227",
         "img_dir": "/usr/share/grafana/public/img"

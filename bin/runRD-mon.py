@@ -16,7 +16,6 @@ def parser():
     argparser.add_argument("config", type=str, nargs='?', const=None, help='[config file name (default: RD-monconfig.json)]') 
     argparser.add_argument("-b", "--batch", help="batch mode", dest='batch', action="store_true")
     argparser.add_argument("-v","--verbose", help="verbose", dest='verbose', action="store_true")
-    argparser.add_argument("-f","--force", help="auto fitting", dest='fit', action="store_true")
     opts=argparser.parse_args()
     
     return(opts)
@@ -29,17 +28,14 @@ def get_sorted_numeric_dirs(path):
     return sorted(numeric_dirs)
 
 # path
-RDSW          = os.environ['RDSW'] + '/'
+RDSW          = os.environ['RDSW']
 configfile    = 'RD-monconfig.json'
-CONFIG_SOURCE = RDSW + 'config/RD-monconfig.json'
-analyzerbin   = 'bin/'
-# rootmacrodir  = 'root_macros'
-runRD_ana     = RDSW + analyzerbin + 'runRD-ana.py -b -f'
-# img_dir       = '/var/www/html'
+CONFIG_SOURCE = RDSW + '/config/RD-monconfig.json'
+analyzerbin   = 'bin'
+runRD_ana     = RDSW + '/'  + analyzerbin + '/runRD-ana.py -b -f'
 
 batch_mode   = 0
 verbose      = 0
-auto_fitting = 0
 
 print('### runRD-mon.py ###')
 
@@ -51,9 +47,6 @@ if args.batch:
 if args.verbose:
     print(" verbose")
     verbose=1
-if args.fit:
-    print(" auto fitting")
-    auto_fitting=1
     
 if (os.path.isfile(configfile)):
     if verbose:
@@ -117,14 +110,17 @@ while(True):
         cmd = 'rsync -dq ' + ana_dir_list[detID] + '/rnmon/*/* ' + mon_dir_list[detID]
         if(verbose):
             print("cmd: ", cmd)
-        proc=subprocess.run(cmd,shell=True)
+        proc = subprocess.run(cmd,shell=True)
 
         # send images to grafana server
-        latest_dir = get_sorted_numeric_dirs(ana_dir_list[detID])[-1]
-        cmd = "rsync -avz --include='*.png' --exclude='*' -e 'ssh -o StrictHostKeyChecking=no' " + latest_dir + "/ " + json_load['grafana']['hostuser'] + "@" + json_load['grafana']['host'] + ":" + json_load['grafana']['img_dir']
-        if(verbose):
-            print("cmd: ", cmd)
-        proc=subprocess.run(cmd,shell=True)
+        if (json_load['grafana']['activate']):
+            latest_dir = get_sorted_numeric_dirs(ana_dir_list[detID])[-1]
+            cmd = "rsync -vz -e 'ssh -o StrictHostKeyChecking=no' " + latest_dir + "/rnrate.png " + json_load['grafana']['hostuser'] + "@" + json_load['grafana']['host'] + ":" + json_load['grafana']['img_dir'] + '/rnrate_' + name_list[detID] + '.png'
+            # print(cmd)
+            proc = subprocess.run(cmd,shell=True)
+            cmd = "rsync -vz -e 'ssh -o StrictHostKeyChecking=no' " + latest_dir + "/vis.png " + json_load['grafana']['hostuser'] + "@" + json_load['grafana']['host'] + ":" + json_load['grafana']['img_dir'] + '/vis_' + name_list[detID] + '.png'
+            proc = subprocess.run(cmd,shell=True)
+            # print(cmd)
 
 
     print("## monitor update ##")
@@ -170,12 +166,6 @@ while(True):
                     else:
                         data=[{'measurement':measurement,'fields':{'value':rate,'error':rate_error},'time':np_ut,'tags':{'detector':detector,'isotope':'others'}}]
                     client.write_points(data)                                            
-
-        # write to the influxDB
-        det=list(json_load['detectors'].items())[detID][0]
-        detector=json_load['detectors'][det]['detector']
-        data=[{'measurement':'test','fields':{'value':8.0},'time':1687412683324915288,'tags':{'detector':detector,'isotope':Po218}}]
-        client.write_points(data)
 
         
     print("sleeping for ",interval," seconds.")
