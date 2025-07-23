@@ -1,0 +1,13 @@
+{
+    "dirs_from": [
+        "/home/msgc/RD1",
+        "/home/msgc/RD2",
+        "/home/msgc/RD3"
+    ],
+    "dirs_to": [
+        "/nadb/nadb41/msgc",
+        "/nadb/nadb57/msgc",
+        "/nadb/nadb65/RD"
+    ],
+    "interval": 60
+}
