@@ -3,25 +3,17 @@
 
 void compRate()
 {
-    SetShStyle();
+    SetShStyle(0);
 
-    const std::string data_dir = "/nadb/nadb55/namai/newage/03b/radonRate/ana/";
-    const std::string outputDir = "/nadb/nadb55/namai/newage/03b/radonRate/ana/plot";
-    const int sampleN = 13;
+    const std::string data_dir = "/nadb/nadb55/namai/newage/RD3/ana/";
+    const std::string outputDir = "/nadb/nadb55/namai/newage/RD3/ana/plot";
+    const int sampleN = 4;
     const std::string sample_dirs[sampleN] = {
-        "20240202",
-        "20240222",
-        "20240314",
-        "20240329",
-        "20240409",
-        "20240416",
-        "20240424",
-        "20240509",
-        "20240518",
-        "20240603",
-        "20240624",
-        "20240702",
-        "20240723"};
+        "20230810",
+        "20230927",
+        "20240921",
+        "20250709",
+    };
 
     std::vector<double> rate(sampleN);
     std::vector<double> rate_err(sampleN);
@@ -51,15 +43,15 @@ void compRate()
             std::string tmp;
             double tmp_Po, tmp_Po_err, tmp_Po_lim;
             double tmp_Rn, tmp_Rn_err, tmp_Rn_lim;
+
+            // Extract values from specific lines
             if (lineID == 5)
             {
                 iss >> tmp >> tmp_Po >> tmp >> tmp_Po_err;
-                // std::cout << tmp_Po << " " << tmp_Po_err << std::endl;
             }
             if (lineID == 6)
             {
                 iss >> tmp >> tmp >> tmp >> tmp_Po_lim;
-                // std::cout << tmp_Po_lim << std::endl;
             }
             if (lineID == 11)
             {
@@ -69,6 +61,8 @@ void compRate()
             {
                 iss >> tmp >> tmp >> tmp >> tmp_Rn_lim;
             }
+
+            // Fill data points
             ge_Po->SetPoint(i, i, tmp_Po);
             ge_Po->SetPointError(i, 0, tmp_Po_err);
             g_Po_lim->SetPoint(i, i, tmp_Po_lim);
@@ -81,30 +75,7 @@ void compRate()
 
     gStyle->SetNdivisions(200 + sampleN, "X");
 
-    c_Po->cd();
-    c_Po->SetGrid();
-    ge_Po->SetMarkerStyle(20);
-    ge_Po->SetMarkerSize(1.0);
-    ge_Po->SetMarkerColor(kBlue);
-    ge_Po->SetLineColor(kBlue);
-    ge_Po->SetLineWidth(2);
-    ge_Po->GetXaxis()->SetLimits(-1, sampleN);
-    ge_Po->GetYaxis()->SetRangeUser(0, 30);
-    ge_Po->GetXaxis()->SetTitle("Sample ID");
-    ge_Po->GetYaxis()->SetTitle("^{214}Po rate [cpd]");
-    ge_Po->Draw("AP");
-    g_Po_lim->SetMarkerStyle(20);
-    g_Po_lim->SetMarkerSize(1.0);
-    g_Po_lim->SetMarkerColor(kRed);
-    g_Po_lim->SetLineColor(kRed);
-    g_Po_lim->SetLineWidth(2);
-    g_Po_lim->Draw("P");
-
-    TLegend *leg_Po = new TLegend(0.2, 0.8, 0.4, 0.9);
-    leg_Po->AddEntry(ge_Po, "^{214}Po rate", "lp");
-    leg_Po->AddEntry(g_Po_lim, "Upper limit (90\% C.L.)", "p");
-    leg_Po->Draw();
-
+    // ----- ^{222}Rn plot -----
     c_Rn->cd();
     c_Rn->SetGrid();
     ge_Rn->SetMarkerStyle(20);
@@ -113,10 +84,11 @@ void compRate()
     ge_Rn->SetLineColor(kBlue);
     ge_Rn->SetLineWidth(2);
     ge_Rn->GetXaxis()->SetLimits(-1, sampleN);
-    ge_Rn->GetYaxis()->SetRangeUser(0, 10);
+    ge_Rn->GetYaxis()->SetRangeUser(-0.5, 0.5);
     ge_Rn->GetXaxis()->SetTitle("Sample ID");
     ge_Rn->GetYaxis()->SetTitle("^{222}Rn rate in 0.3b [Bq]");
     ge_Rn->Draw("AP");
+
     g_Rn_lim->SetMarkerStyle(20);
     g_Rn_lim->SetMarkerSize(1.0);
     g_Rn_lim->SetMarkerColor(kRed);
@@ -124,13 +96,60 @@ void compRate()
     g_Rn_lim->SetLineWidth(2);
     g_Rn_lim->Draw("P");
 
-    TLegend *leg_Rn = new TLegend(0.2, 0.8, 0.4, 0.9);
+    const double hlen = 0.1; // Half length of horizontal bar
+    const double arrow_len = 0.1;
+    int npoints = ge_Rn->GetN();
+
+    for (int i = 0; i < npoints; ++i)
+    {
+        double x = 0, y = 0;
+        g_Rn_lim->GetPoint(i, x, y); // Get coordinates of limit point
+
+        // Horizontal line centered at (x, y)
+        TLine *hline = new TLine(x - hlen, y, x + hlen, y);
+        hline->SetLineColor(kRed);
+        hline->SetLineWidth(2);
+        hline->Draw();
+
+        // Downward arrow from (x, y)
+        TArrow *arrow = new TArrow(x, y, x, y - arrow_len, 0.02, "|>");
+        arrow->SetLineColor(kRed);
+        arrow->SetLineWidth(2);
+        arrow->Draw();
+    }
+
+    // Draw dashed line at y = 0
+    double xmin = ge_Rn->GetXaxis()->GetXmin();
+    double xmax = ge_Rn->GetXaxis()->GetXmax();
+
+    TLine *zeroLine = new TLine(xmin, 0, xmax, 0);
+    zeroLine->SetLineStyle(2); // Dashed
+    zeroLine->SetLineWidth(2);
+    zeroLine->SetLineColor(kGray + 2);
+    zeroLine->Draw();
+
+    // Draw hatched area for y < 0
+    double ymin = ge_Rn->GetHistogram()->GetMinimum();
+    double ymax = ge_Rn->GetHistogram()->GetMaximum();
+
+    if (ymin > 0)
+        ymin = 0; // Ensure hatch covers below y=0
+
+    // Draw rectangle with hatch style
+    TBox *hatchBox = new TBox(xmin, ymin, xmax, 0);
+    hatchBox->SetFillStyle(3004); // Hatched pattern
+    hatchBox->SetFillColor(kGray + 1);
+    hatchBox->SetLineColor(0); // No border
+    hatchBox->Draw("same");
+
+    // Add legend
+    TLegend *leg_Rn = new TLegend(0.2, 0.75, 0.5, 0.9);
     leg_Rn->AddEntry(ge_Rn, "^{222}Rn rate", "lp");
-    leg_Rn->AddEntry(g_Rn_lim, "Upper limit (90\% C.L.)", "p");
+    leg_Rn->AddEntry(g_Rn_lim, "Upper limit (90% C.L.)", "p");
     leg_Rn->Draw();
 
-    c_Po->SaveAs(Form("%s/PoRate.png", outputDir.c_str()));
-    c_Rn->SaveAs(Form("%s/RnRate.png", outputDir.c_str()));
+    // Save canvas
+    c_Rn->SaveAs(Form("%s/RnRateLBGuPIC.png", outputDir.c_str()));
 
     return;
 }
