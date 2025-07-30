@@ -115,10 +115,10 @@ while(True):
         # send images to grafana server
         if (json_load['grafana']['activate']):
             latest_dir = get_sorted_numeric_dirs(ana_dir_list[detID])[-1]
-            cmd = "rsync -vz -e 'ssh -o StrictHostKeyChecking=no' " + latest_dir + "/rnrate.png " + json_load['grafana']['hostuser'] + "@" + json_load['grafana']['host'] + ":" + json_load['grafana']['img_dir'] + '/rnrate_' + name_list[detID] + '.png'
+            cmd = "rsync -vz -e 'ssh -i /home/msgc/.ssh/id_ecdsa' " + latest_dir + "/rnrate.png " + json_load['grafana']['hostuser'] + "@" + json_load['grafana']['host'] + ":" + json_load['grafana']['img_dir'] + '/rnrate_' + name_list[detID] + '.png'
             # print(cmd)
             proc = subprocess.run(cmd,shell=True)
-            cmd = "rsync -vz -e 'ssh -o StrictHostKeyChecking=no' " + latest_dir + "/vis.png " + json_load['grafana']['hostuser'] + "@" + json_load['grafana']['host'] + ":" + json_load['grafana']['img_dir'] + '/vis_' + name_list[detID] + '.png'
+            cmd = "rsync -vz -e 'ssh -i /home/msgc/.ssh/id_ecdsa' " + latest_dir + "/vis.png " + json_load['grafana']['hostuser'] + "@" + json_load['grafana']['host'] + ":" + json_load['grafana']['img_dir'] + '/vis_' + name_list[detID] + '.png'
             proc = subprocess.run(cmd,shell=True)
             # print(cmd)
 
