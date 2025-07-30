@@ -1,16 +1,17 @@
-#!/usr//bin/python3
+#!/usr//bin/env python3
 
-import subprocess, os,sys
+import os
+import sys
+import subprocess
+import json
 
-dirs_from=['/home/msgc/RD?']
-dirs_to=['/nadb/nadb41/msgc','/nadb/nadb57/msgc','/nadb/nadb65/RD'] 
+RDSW = os.environ['RDSW']
 
-for dir_from in dirs_from:
-    for dir_to in dirs_to:
-        #bup_cmd=['rsync -avz',dir_from,dir_to]
-        #bup_cmd='rsync -avz --copy-links '+dir_from+" "+dir_to
-        bup_cmd='rsync -azq --copy-links '+dir_from+" "+dir_to
-        #print(bup_cmd)
-        subprocess.run(bup_cmd,shell="yes")
-    
+with open(RDSW + '/config/RD-bupconfig.json', 'r') as json_open:
+    json_load = json.load(json_open)
 
+dirs_from = json_load['dirs_from']
+dirs_to = json_load['dirs_to']
+
+print(dirs_from)
+print(dirs_to)

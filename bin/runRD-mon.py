@@ -1,43 +1,52 @@
 #!/usr/bin/python3
 
-import subprocess, os,sys
+import os
+import subprocess
+import re
 import argparse
-import time,datetime
+import time
+import datetime
 import json
 import numpy as np
 from subprocess import PIPE
 from influxdb import InfluxDBClient
 
 def parser():
-    argparser=argparse.ArgumentParser()
-    argparser.add_argument("config",type=str,nargs='?',const=None,help='[config file name (default: RD-monconfig.json)]') 
-    argparser.add_argument("-b","--batch", help="batch mode",dest='batch',action="store_true")
-    argparser.add_argument("-v","--verbose", help="verbose",dest='verbose',action="store_true")
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument("config", type=str, nargs='?', const=None, help='[config file name (default: RD-monconfig.json)]') 
+    argparser.add_argument("-b", "--batch", help="batch mode", dest='batch', action="store_true")
+    argparser.add_argument("-v","--verbose", help="verbose", dest='verbose', action="store_true")
     opts=argparser.parse_args()
+    
     return(opts)
 
-RDSW=os.environ['RDSW']+'/'
-configfile='RD-monconfig.json'
-CONFIG_SOURCE=RDSW+'config/RD-monconfig.json'
-analyzerbin='bin/'
-rootmacrodir='root_macros'
-runRD_ana=RDSW+analyzerbin+'runRD-ana.py -b '
+def get_sorted_numeric_dirs(path):
+    pattern = re.compile(r'^[0-9_]+$')
+    items = os.listdir(path)
+    numeric_dirs = [item for item in items if os.path.isdir(os.path.join(path, item)) and pattern.match(item)]
 
-batch_mode=0
-verbose=0
+    return sorted(numeric_dirs)
 
+# path
+RDSW          = os.environ['RDSW']
+configfile    = 'RD-monconfig.json'
+CONFIG_SOURCE = RDSW + '/config/RD-monconfig.json'
+analyzerbin   = 'bin'
+runRD_ana     = RDSW + '/'  + analyzerbin + '/runRD-ana.py -b -f'
+
+batch_mode   = 0
+verbose      = 0
 
 print('### runRD-mon.py ###')
+
+# checking arguments
 args = parser()
 if args.batch:
-    #switch for batch mode
     print(" batch mode")
     batch_mode=1    
 if args.verbose:
-    #verbose
     print(" verbose")
     verbose=1
-
     
 if (os.path.isfile(configfile)):
     if verbose:
@@ -48,25 +57,23 @@ else:
         print(cmd)
     subprocess.run(cmd,shell=True)
 
-detinfo=[]
-name_list=[]
-data_dir_list=[]
-ana_dir_list=[]
-mon_dir_list=[]
-rate_file_list=[]
-#config file read
+detinfo        = []
+name_list      = []
+data_dir_list  = []
+ana_dir_list   = []
+mon_dir_list   = []
+rate_file_list = []
 
-print(" reading configfile ",configfile)
-json_open=open(configfile,"r")
-json_load=json.load(json_open)
-#print(json_load)
+# read config file
+print("Reading config file: ",configfile)
+with open(configfile, "r") as json_open:
+    json_load = json.load(json_open)
 
-#status_dir=RDSW+json_load['status_dir']
-interval=json_load['interval']
+interval = json_load['interval']
+numofdet = len(json_load['detectors'])
 
-numofdet=len(json_load['detectors'])
 for detID in range (numofdet):
-    det=list(json_load['detectors'].items())[detID][0]
+    det = list(json_load['detectors'].items())[detID][0]
     detinfo.append(list(json_load['detectors'][det].items()))
     for item in detinfo[detID]:
         if(item[0]=="detector"):
@@ -80,49 +87,58 @@ for detID in range (numofdet):
 
 # output the directories
 for detID in range (numofdet):
-    data_dir_list[detID]=data_dir_list[detID]
-    ana_dir_list[detID]=ana_dir_list[detID]
-    print("  detector",detID,end=":")
-    print(" name=",name_list[detID],end=",")
-    print(" data_dir=",data_dir_list[detID],end=",")
-    print(" ana_dir=",ana_dir_list[detID])
+    print("detector", detID)
+    print("  name     = ", name_list[detID])
+    print("  data_dir = ", data_dir_list[detID])
+    print("  ana_dir  = ", ana_dir_list[detID])
 
-#influxdb setting
-#print("influxdb host: ",json_load['influxdb']['host'])
+# influxdb setting
 client = InfluxDBClient( host     = json_load['influxdb']['host'],
                          port     = json_load['influxdb']['port'],
                          username = json_load['influxdb']['user'],
                          password = json_load['influxdb']['passwd'],
                          database = json_load['influxdb']['database'])    
     
-#runRD_ana
-while(1):
-    for detID in range (numofdet):#analysis loop
-        #cmd='xterm -e cd '+ ana_dir_list[detID]+'; '+runRD_ana
-        cmd='cd '+ ana_dir_list[detID]+'; '+runRD_ana
+# runRD_ana
+while(True):
+    for detID in range(numofdet):
+        cmd = 'cd '+ ana_dir_list[detID]+'; '+runRD_ana
         if(verbose):
-            print("cmd:",cmd)
-        proc=subprocess.run(cmd,shell=True)
-        cmd='rsync -dq '+ ana_dir_list[detID]+'/rnmon/*/* '+mon_dir_list[detID]
+            print("cmd: ", cmd)
+        proc = subprocess.run(cmd, shell=True)
+
+        cmd = 'rsync -dq ' + ana_dir_list[detID] + '/rnmon/*/* ' + mon_dir_list[detID]
         if(verbose):
-            print("cmd:",cmd)
-        proc=subprocess.run(cmd,shell=True)
+            print("cmd: ", cmd)
+        proc = subprocess.run(cmd,shell=True)
+
+        # send images to grafana server
+        if (json_load['grafana']['activate']):
+            latest_dir = get_sorted_numeric_dirs(ana_dir_list[detID])[-1]
+            cmd = "rsync -vz -e 'ssh -i /home/msgc/.ssh/id_ecdsa' " + latest_dir + "/rnrate.png " + json_load['grafana']['hostuser'] + "@" + json_load['grafana']['host'] + ":" + json_load['grafana']['img_dir'] + '/rnrate_' + name_list[detID] + '.png'
+            # print(cmd)
+            proc = subprocess.run(cmd,shell=True)
+            cmd = "rsync -vz -e 'ssh -i /home/msgc/.ssh/id_ecdsa' " + latest_dir + "/vis.png " + json_load['grafana']['hostuser'] + "@" + json_load['grafana']['host'] + ":" + json_load['grafana']['img_dir'] + '/vis_' + name_list[detID] + '.png'
+            proc = subprocess.run(cmd,shell=True)
+            # print(cmd)
+
 
     print("## monitor update ##")
-    #np_ut=np.int64(0)
-    for detID in range (numofdet):#monitor update loop
-        #make the rate file list
-        cmd='ls '+ ana_dir_list[detID]+'/rnmon/*/* '
+    for detID in range (numofdet):
+        # make the rate file list
+        cmd = 'ls ' + ana_dir_list[detID] + '/rnmon/*/*'
         if(verbose):
-            print("cmd:",cmd)
-        proc=subprocess.run(cmd,shell=True, stdout=PIPE, stderr=PIPE)
+            print("cmd:", cmd)
+        proc = subprocess.run(cmd, shell=True, stdout=PIPE, stderr=PIPE)
+
         rate_file_list.insert(detID,(proc.stdout.decode().split('\n')))
-        numofratefiles=len(rate_file_list[detID])-1
-        print("number of ratefiles: ",numofratefiles)
+        numofratefiles = len(rate_file_list[detID]) - 1
+        print("Number of ratefiles: ", numofratefiles)
+
         for ratefileID in range (numofratefiles):
-            infile=rate_file_list[detID][ratefileID]
+            infile = rate_file_list[detID][ratefileID]
             with open(infile) as f:
-                l=f.readlines()
+                l = f.readlines()
                 for lineID in range(len(l)):
                     detector=name_list[detID]
                     det=list(json_load['detectors'].items())[detID][0]
@@ -150,12 +166,6 @@ while(1):
                     else:
                         data=[{'measurement':measurement,'fields':{'value':rate,'error':rate_error},'time':np_ut,'tags':{'detector':detector,'isotope':'others'}}]
                     client.write_points(data)                                            
-
-        #write to influxDB
-        det=list(json_load['detectors'].items())[detID][0]
-        detector=json_load['detectors'][det]['detector']
-        data=[{'measurement':'test','fields':{'value':8.0},'time':1687412683324915288,'tags':{'detector':detector,'isotope':Po218}}]
-        client.write_points(data)
 
         
     print("sleeping for ",interval," seconds.")

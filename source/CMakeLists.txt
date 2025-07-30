@@ -11,7 +11,7 @@ find_package(ROOT REQUIRED)
 include_directories(${ROOT_INCLUDE_DIRS})
 
 include(${ROOT_USE_FILE})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 
 if (NOT WIN32)
@@ -27,7 +27,9 @@ endif()
 
 add_executable(RD-daq "RD-daq.cpp")
 add_executable(RD_dat2root "RD_dat2root.cpp")
-add_executable(RD_rnrate "RD_rnrate.cpp")
+#add_executable(RD_rnrate "RD_rnrate.cpp")
+add_executable(RD_rnrate RD_rnrate.cpp shStyle.cc)
+
 
 target_link_libraries(RD-daq PRIVATE m2k)
 target_link_libraries(RD_dat2root PRIVATE ROOT::RIO ROOT::Net ROOT::Tree)
