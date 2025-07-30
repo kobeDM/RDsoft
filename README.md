@@ -38,6 +38,7 @@ $ runRD-ana.py (analysis runner)
 ## analysis including influxdb update
 Grafana monitoring will be performed by: 
 ```
+# If you want to output a result plot, use ssh key authentication.
 $ cd ~status/radon
 $ nohup runRD-mon.py &(monitoring runner including auto analysis)
 access http://10.37.0.216:3000/
