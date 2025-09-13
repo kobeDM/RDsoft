@@ -1,4 +1,5 @@
 bin/*
 !bin/*.py
+!bin/*.sh
 build/*
 .vscode
