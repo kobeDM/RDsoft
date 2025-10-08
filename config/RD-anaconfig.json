@@ -29,9 +29,13 @@
     "show_Po218": 1,
     "show_Po212": 1,
     "show_rate_max": 50.0,
+    "show_twin_min": 45.0,
+    "show_twin_max": 68.0,
     "show_sp_bin": 100,
     "show_sp_min": -0.1,
     "show_sp_max": 3.0,
+    "show_area_min": 0.0,
+    "show_area_max": 25.0,
     "show_sp_bin_MeV": 100,
     "show_sp_min_MeV": 4,
     "show_sp_max_MeV": 10

@@ -150,18 +150,22 @@ int main(int argc, char **argv)
     twin_avg[0] = twin_avg_start_us * sampling_hertz / 1e6;
     twin_avg[1] = twin_avg[0] + twin;
 
-    double show_rate_max = pt.get<double>("view.show_rate_max");
-
+    
     double Toffset = 0;
     int show_Po214 = pt.get<int>("view.show_Po214");
     int show_Po218 = pt.get<int>("view.show_Po218");
     int show_Po212 = pt.get<int>("view.show_Po212");
+    double show_rate_max = pt.get<double>("view.show_rate_max");
+    double twinMin = pt.get<double>("view.show_twin_min");
+    double twinMax = pt.get<double>("view.show_twin_max");
     int spbin = pt.get<int>("view.show_sp_bin");
     double spmax = pt.get<double>("view.show_sp_max");
     double spmin = pt.get<double>("view.show_sp_min");
     int spMbin = pt.get<int>("view.show_sp_bin_MeV");
     double spMmax = pt.get<double>("view.show_sp_max_MeV");
     double spMmin = pt.get<double>("view.show_sp_min_MeV");
+    double areaMin = pt.get<double>("view.show_area_min");
+    double areaMax = pt.get<double>("view.show_area_max");
     ULong64_t runstarttime = pt.get<double>("DAQ.RUN START");
 
     if (verbose)
@@ -239,24 +243,28 @@ int main(int argc, char **argv)
     h_ph->SetTitle("Pulse height");
     h_ph->GetXaxis()->SetTitle("Pulse height(V)");
     h_ph->GetYaxis()->SetTitle("Counts");
-    h_ph->SetLineColor(2);
+    h_ph->SetLineColor(kRed);
+    h_ph->SetFillColor(kRed);
+    h_ph->SetFillStyle(3001);
     h_ph_nc->SetTitle("Pulse height");
     h_ph_nc->GetXaxis()->SetTitle("Pulse height(V)");
     h_ph_nc->GetYaxis()->SetTitle("Counts");
-    h_ph_nc->SetLineColor(4);
-    TH1D *h_q = new TH1D("h_q", "h_q", spbin, -dynamic_range * 10, dynamic_range * 10);
+    h_ph_nc->SetLineColor(kBlue);
+    h_ph_nc->SetFillColor(kBlue);
+    h_ph_nc->SetFillStyle(3001);
+    TH1D *h_q = new TH1D("h_q", "h_q", spbin, -areaMin, areaMax);
     h_q->SetTitle("Area");
     h_q->GetXaxis()->SetTitle("Area");
     h_q->GetYaxis()->SetTitle("Counts");
-    TH2D *h_ph_q = new TH2D("h_ph_q", "h_ph_q", spbin, -dynamic_range, dynamic_range, spbin, -dynamic_range * 10., dynamic_range * 10.);
+    // TH2D *h_ph_q = new TH2D("h_ph_q", "h_ph_q", spbin, -dynamic_range, dynamic_range, spbin, -dynamic_range * 10., dynamic_range * 10.);
     TGraph *tg_ph_q = new TGraph();
     tg_ph_q->SetTitle("Pulse height vs. Area");
     tg_ph_q->GetXaxis()->SetTitle("Pulse height (V)");
     tg_ph_q->GetYaxis()->SetTitle("Area");
     TGraph *tg_ph_q_veto = new TGraph();
-    h_ph_q->SetTitle("Pulse height vs. Area");
-    h_ph_q->GetXaxis()->SetTitle("Pulse height (V)");
-    h_ph_q->GetYaxis()->SetTitle("Charge");
+    // h_ph_q->SetTitle("Pulse height vs. Area");
+    // h_ph_q->GetXaxis()->SetTitle("Pulse height (V)");
+    // h_ph_q->GetYaxis()->SetTitle("Charge");
     TH2D *h_wf = new TH2D("h_wf", "h_wf", sampling_number, 0, (double)sampling_number / sampling_hertz * 1e6, spbin, -dynamic_range, dynamic_range);
     h_wf->SetTitle("Waveform");
     h_wf->GetXaxis()->SetTitle("#musec.");
@@ -287,14 +295,14 @@ int main(int argc, char **argv)
     if (verbose)
         std::cout << "--- Set histograms ---" << std::endl;
 
-    TLine *l_inte_s = new TLine(twin_avg[0] / sampling_hertz * 1e6, -0.5, twin_avg[0] / sampling_hertz * 1e6, 0.5);
-    TLine *l_inte_e = new TLine(twin_avg[1] / sampling_hertz * 1e6, -0.5, twin_avg[1] / sampling_hertz * 1e6, 0.5);
-    l_inte_s->SetLineStyle(1);
-    l_inte_e->SetLineStyle(1);
+    TLine *l_inte_s = new TLine(twin_avg[0] / sampling_hertz * 1e6, -spmax*0.2, twin_avg[0] / sampling_hertz * 1e6, spmax*0.2);
+    TLine *l_inte_e = new TLine(twin_avg[1] / sampling_hertz * 1e6, -spmax*0.2, twin_avg[1] / sampling_hertz * 1e6, spmax*0.2);
+    l_inte_s->SetLineStyle(2);
+    l_inte_e->SetLineStyle(2);
     l_inte_s->SetLineWidth(2);
     l_inte_e->SetLineWidth(2);
-    l_inte_s->SetLineColor(kGreen + 2);
-    l_inte_e->SetLineColor(kGreen + 2);
+    l_inte_s->SetLineColor(kRed + 2);
+    l_inte_e->SetLineColor(kRed + 2);
 
     // ##############################
     //  main loop
@@ -430,7 +438,7 @@ int main(int argc, char **argv)
             thisbin = int((timestamp - runstarttime) / 60. / 60 / 24 / tbin);
             h_ph->Fill(volt_max - offset);
             h_q->Fill(volt_sum);
-            h_ph_q->Fill(volt_max - offset, volt_sum);
+            // h_ph_q->Fill(volt_max - offset, volt_sum);
             tg_ph_q->SetPoint(tg_ph_q->GetN(), volt_max - offset, volt_sum);
             if (E > Eth_MeV)
                 h_ene->Fill(E);
@@ -590,7 +598,7 @@ int main(int argc, char **argv)
     {
         ptext[8 - i] = new TPaveText(.05, i * 0.1 + 0.05, .95, i * 0.1 + 0.15);
     }
-    ptext[0]->AddText("config");
+    ptext[0]->AddText("Config");
     ptext[1]->AddText(Form("DATA: %s", infile.c_str()));
     ptext[2]->AddText(Form("DETECTOR: RD%d", det_id + 1));
     ptext[3]->AddText(Form("cal_a: %.1lf(MeV/V)", cal_a[det_id]));
@@ -646,41 +654,39 @@ int main(int argc, char **argv)
         ptext[i]->Draw();
     }
     c_vis->cd(2);
-    h_wf->GetXaxis()->SetRangeUser(45, 68);
-    h_wf->GetYaxis()->SetRangeUser(-1.5, 1.5);
+    h_wf->GetXaxis()->SetRangeUser(twinMin, twinMax);
+    h_wf->GetYaxis()->SetRangeUser(-spmax, spmax);
     h_wf->Draw("colz");
     l_inte_s->Draw();
     l_inte_e->Draw();
     c_vis->cd(3);
     h_ph_nc->Draw();
     h_ph->Draw("same");
-    TLegend *leg_h_ph = new TLegend(0.50, 0.75, 0.70, 0.85);
+    TLegend *leg_h_ph = new TLegend(0.70, 0.8, 0.90, 0.9);
     leg_h_ph->SetFillColor(0);
     leg_h_ph->SetFillStyle(0);
-    leg_h_ph->AddEntry(h_ph_nc, "all", "f");
-    leg_h_ph->AddEntry(h_ph, "cut", "f");
+    leg_h_ph->AddEntry(h_ph_nc, "non-veto", "f");
+    leg_h_ph->AddEntry(h_ph, "veto", "f");
     leg_h_ph->Draw();
     c_vis->cd(4);
-    h_ph_q->GetXaxis()->SetRangeUser(0, dynamic_range);
-    h_ph_q->GetYaxis()->SetRangeUser(0, dynamic_range * 100);
-    // h_ph_q->Draw("colz");
     tg_ph_q->SetMarkerColor(2);
     tg_ph_q_veto->SetMarkerColor(4);
     tg_ph_q->SetMarkerSize(2);
     tg_ph_q_veto->SetMarkerSize(1);
-    tg_ph_q->GetYaxis()->SetRangeUser(0, dynamic_range * 10);
+    tg_ph_q->GetXaxis()->SetRangeUser(spmin, spmax);
+    tg_ph_q->GetYaxis()->SetRangeUser(areaMin, areaMax);
     tg_ph_q->Draw("AP");
     tg_ph_q_veto->Draw("P");
-    TLegend *leg_ph_q = new TLegend(0.15, 0.75, 0.35, 0.85);
+    TLegend *leg_ph_q = new TLegend(0.70, 0.8, 0.90, 0.9);
     leg_ph_q->SetFillColor(0);
     leg_ph_q->SetFillStyle(0);
-    leg_ph_q->AddEntry(tg_ph_q, "all", "p");
-    leg_ph_q->AddEntry(tg_ph_q_veto, "cut", "p");
+    leg_ph_q->AddEntry(tg_ph_q, "non-veto", "p");
+    leg_ph_q->AddEntry(tg_ph_q_veto, "veto", "p");
     leg_ph_q->Draw();
     c_vis->cd(5);
     h_ene->Draw("hist e");
     c_vis->cd(6);
-    h_q->GetXaxis()->SetRangeUser(0, dynamic_range * 100);
+    h_q->GetXaxis()->SetRangeUser(areaMin, areaMax);
     h_q->Draw();
 
     TCanvas *c_rn = new TCanvas("c_radonrate", "c_radonrate", 480, 800);
@@ -721,17 +727,17 @@ int main(int argc, char **argv)
         h_po218_sel->Draw("hist same");
     TLatex lat;
 
-    lat.SetTextSize(0.04);
-    float labelposx = spMmin + .05 * (spMmax - spMmin);
-    lat.DrawLatex(labelposx, 0.90 * h_poraw->GetMaximum(), Form("DATA: %s", infile.c_str()));
-    lat.DrawLatex(labelposx, 0.85 * h_poraw->GetMaximum(), Form("DETECTOR: RD%d", det_id + 1));
-    lat.DrawLatex(labelposx, 0.80 * h_poraw->GetMaximum(), Form("cal_a: %.2lf", cal_a[det_id]));
-    lat.DrawLatex(labelposx, 0.75 * h_poraw->GetMaximum(), Form("live time: %.2f days", live));
-    lat.DrawLatex(labelposx, 0.70 * h_poraw->GetMaximum(), Form("Area threshold: %.2f", area_threshold));
-    lat.DrawLatex(labelposx, 0.65 * h_poraw->GetMaximum(), Form("Pulse height threshold: %.1f", pulse_height_threshold));
+    lat.SetTextSize(0.05);
+    lat.SetNDC();
+    lat.DrawLatex(0.20, 0.87, Form("DATA: %s", infile.c_str()));
+    lat.DrawLatex(0.20, 0.82, Form("DETECTOR: RD%d", det_id + 1));
+    lat.DrawLatex(0.20, 0.77, Form("cal_a: %.2lf", cal_a[det_id]));
+    lat.DrawLatex(0.20, 0.72, Form("live time: %.2f days", live));
+    lat.DrawLatex(0.20, 0.67, Form("Area threshold: %.2f", area_threshold));
+    lat.DrawLatex(0.20, 0.62, Form("Pulse height threshold: %.1f", pulse_height_threshold));
 
     c_rn->cd(2);
-    c_rn->DrawFrame(0, 0, live * 1.1, show_rate_max, "Rn Rate;time(day);counts/day");
+    c_rn->DrawFrame(0, 0, live * 1.1, show_rate_max, "Rn Rate;Elapsed day;counts/day");
     g_po212_rate->SetLineColor(col_Po212);
     g_po212_rate->SetLineWidth(linewidth_rate);
     g_po212_rate->SetMarkerStyle(markerstyle_rate);
@@ -806,33 +812,34 @@ int main(int argc, char **argv)
     leg_rate->AddEntry(g_po214_rate, "214Po+ rate", "pl");
     leg_rate->AddEntry(g_po218_rate, "218Po+ rate", "pl");
 
-    lat.SetTextSize(0.06);
-    lat.DrawLatex(live * .05, 0.9 * show_rate_max, Form("DATA:%s", infile.c_str()));
-    lat.DrawLatex(live * .05, 0.82 * show_rate_max, Form("DETECTOR:RD%d", det_id + 1));
+    // lat.SetNDC(2);
+    // lat.SetTextSize(0.06);
+    lat.DrawLatex(0.2, 0.87, Form("DATA:%s", infile.c_str()));
+    lat.DrawLatex(0.2, 0.82, Form("DETECTOR:RD%d", det_id + 1));
     lat.SetTextColor(col_Po214);
     // if (show_Po214 == 1)
     if (show_Po214)
-        lat.DrawLatex(live * .05, 0.74 * show_rate_max, Form("Po214: %.1f +- %.1f cpd.", po214_rate_fit, po214_rate_fit_err));
+        lat.DrawLatex(0.2, 0.77, Form("Po214: %.1f +- %.1f cpd.", po214_rate_fit, po214_rate_fit_err));
     lat.SetTextColor(col_Po218);
     // if (show_Po218 == 1)
     if (show_Po218)
-        lat.DrawLatex(live * .05, 0.66 * show_rate_max, Form("Po218: %.1f +- %.1f cpd.", po218_rate_fit, po218_rate_fit_err));
+        lat.DrawLatex(0.2, 0.72, Form("Po218: %.1f +- %.1f cpd.", po218_rate_fit, po218_rate_fit_err));
     lat.SetTextColor(col_Po212);
     // if (show_Po212 == 1)
     if (show_Po212)
-        lat.DrawLatex(live * .05, 0.58 * show_rate_max, Form("Po212: %.1f +- %.1f cpd.", po212_rate_fit, po212_rate_fit_err));
+        lat.DrawLatex(0.2, 0.67, Form("Po212: %.1f +- %.1f cpd.", po212_rate_fit, po212_rate_fit_err));
 
     c_rn->cd(3);
     c_rn->DrawFrame(0, 0, 1, 1, "Rn Rate");
 
-    lat.SetTextSize(0.06);
+    lat.SetTextSize(0.05);
     lat.SetTextColor(kBlack);
-    lat.DrawLatex(0.1, 0.82, Form("212Po (all period) %.2lf +- %.2lf counts/day", po212_rate, po212_rate_error));
-    lat.DrawLatex(.1, 0.74, Form("214Po (all period) %.2lf +- %.2lf counts/day", po214_rate, po214_rate_error));
-    lat.DrawLatex(.1, 0.66, Form("218Po (all period)%.2lf +- %.2lf counts/day", po218_rate, po218_rate_error));
-    lat.DrawLatex(.1, 0.58, Form("212Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day", integ_win_start_in_days, integ_win_end_in_days, po212_rate_sel, po212_rate_sel_error));
-    lat.DrawLatex(.1, 0.5, Form("214Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day", integ_win_start_in_days, integ_win_end_in_days, po214_rate_sel, po214_rate_sel_error));
-    lat.DrawLatex(.1, 0.42, Form("218Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day", integ_win_start_in_days, integ_win_end_in_days, po218_rate_sel, po218_rate_sel_error));
+    lat.DrawLatex(0.2, 0.87, Form("212Po (all period) %.2lf +- %.2lf counts/day", po212_rate, po212_rate_error));
+    lat.DrawLatex(0.2, 0.82, Form("214Po (all period) %.2lf +- %.2lf counts/day", po214_rate, po214_rate_error));
+    lat.DrawLatex(0.2, 0.77, Form("218Po (all period)%.2lf +- %.2lf counts/day", po218_rate, po218_rate_error));
+    lat.DrawLatex(0.2, 0.72, Form("212Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day", integ_win_start_in_days, integ_win_end_in_days, po212_rate_sel, po212_rate_sel_error));
+    lat.DrawLatex(0.2, 0.67, Form("214Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day", integ_win_start_in_days, integ_win_end_in_days, po214_rate_sel, po214_rate_sel_error));
+    lat.DrawLatex(0.2, 0.62, Form("218Po (day%.1lf-%.1lf) %.2lf +- %.2lf counts/day", integ_win_start_in_days, integ_win_end_in_days, po218_rate_sel, po218_rate_sel_error));
 
     if (verbose)
         std::cout << "--- file output ---" << std::endl;
@@ -840,7 +847,7 @@ int main(int argc, char **argv)
     h_ph->Write();
     h_q->Write();
     h_ene->Write();
-    h_ph_q->Write();
+    // h_ph_q->Write();
     h_poraw->Write();
     h_po212->Write();
     h_po214->Write();
