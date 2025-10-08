@@ -134,13 +134,15 @@ int main(int argc, char **argv)
     double fit_win_end_in_days = pt.get<double>("ana.fit_win_end_in_days");
     double area_threshold = pt.get<double>("ana.area_threshold");
     double pulse_height_threshold = pt.get<double>("ana.pulse_height_threshold");
-    double cal_a[3], cal_b[3];
+    double cal_a[4], cal_b[4];
     cal_a[0] = pt.get<double>("ana.cal_factor_a_RD1");
     cal_a[1] = pt.get<double>("ana.cal_factor_a_RD2");
     cal_a[2] = pt.get<double>("ana.cal_factor_a_RD3");
+    cal_a[3] = pt.get<double>("ana.cal_factor_a_RD4");
     cal_b[0] = pt.get<double>("ana.cal_factor_b_RD1");
     cal_b[1] = pt.get<double>("ana.cal_factor_b_RD2");
     cal_b[2] = pt.get<double>("ana.cal_factor_b_RD3");
+    cal_b[3] = pt.get<double>("ana.cal_factor_b_RD4");
 
     int twin = twin_avg_window_us * sampling_hertz / 1e6;
 
@@ -644,8 +646,8 @@ int main(int argc, char **argv)
         ptext[i]->Draw();
     }
     c_vis->cd(2);
-    h_wf->GetXaxis()->SetRangeUser(40, 60);
-    h_wf->GetYaxis()->SetRangeUser(-2, 2);
+    h_wf->GetXaxis()->SetRangeUser(45, 68);
+    h_wf->GetYaxis()->SetRangeUser(-1.5, 1.5);
     h_wf->Draw("colz");
     l_inte_s->Draw();
     l_inte_e->Draw();
