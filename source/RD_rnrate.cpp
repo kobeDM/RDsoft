@@ -256,15 +256,11 @@ int main(int argc, char **argv)
     h_q->SetTitle("Area");
     h_q->GetXaxis()->SetTitle("Area");
     h_q->GetYaxis()->SetTitle("Counts");
-    // TH2D *h_ph_q = new TH2D("h_ph_q", "h_ph_q", spbin, -dynamic_range, dynamic_range, spbin, -dynamic_range * 10., dynamic_range * 10.);
     TGraph *tg_ph_q = new TGraph();
     tg_ph_q->SetTitle("Pulse height vs. Area");
     tg_ph_q->GetXaxis()->SetTitle("Pulse height (V)");
     tg_ph_q->GetYaxis()->SetTitle("Area");
     TGraph *tg_ph_q_veto = new TGraph();
-    // h_ph_q->SetTitle("Pulse height vs. Area");
-    // h_ph_q->GetXaxis()->SetTitle("Pulse height (V)");
-    // h_ph_q->GetYaxis()->SetTitle("Charge");
     TH2D *h_wf = new TH2D("h_wf", "h_wf", sampling_number, 0, (double)sampling_number / sampling_hertz * 1e6, spbin, -dynamic_range, dynamic_range);
     h_wf->SetTitle("Waveform");
     h_wf->GetXaxis()->SetTitle("#musec.");
@@ -297,12 +293,26 @@ int main(int argc, char **argv)
 
     TLine *l_inte_s = new TLine(twin_avg[0] / sampling_hertz * 1e6, -spmax*0.2, twin_avg[0] / sampling_hertz * 1e6, spmax*0.2);
     TLine *l_inte_e = new TLine(twin_avg[1] / sampling_hertz * 1e6, -spmax*0.2, twin_avg[1] / sampling_hertz * 1e6, spmax*0.2);
+    const double spLimX[2] = {pulse_height_threshold, pulse_height_threshold};
+    const double spLimY[2] = {areaMin, areaMax};
+    const double areaLimX[2] = {spmin, spmax};
+    const double areaLimY[2] = {area_threshold, area_threshold};
+    TGraph *gSpLim = new TGraph(2, spLimX, spLimY);
+    TGraph *gAreaLim = new TGraph(2, areaLimX, areaLimY);
+
     l_inte_s->SetLineStyle(2);
     l_inte_e->SetLineStyle(2);
     l_inte_s->SetLineWidth(2);
     l_inte_e->SetLineWidth(2);
     l_inte_s->SetLineColor(kRed + 2);
     l_inte_e->SetLineColor(kRed + 2);
+
+    gSpLim->SetLineStyle(2);
+    gAreaLim->SetLineStyle(2);
+    gSpLim->SetLineWidth(2);
+    gAreaLim->SetLineWidth(2);
+    gSpLim->SetLineColor(kRed + 2);
+    gAreaLim->SetLineColor(kRed + 2);
 
     // ##############################
     //  main loop
@@ -396,7 +406,6 @@ int main(int argc, char **argv)
         {
             volt_sum += wf[i] - offset;
         }
-        // std::cout << wf[0] << "\t" << offset << "\t" << volt_sum << std::endl;
 
         for (int samp = 0; samp < sampling_number; samp++)
         {
@@ -494,7 +503,6 @@ int main(int argc, char **argv)
         }
     }
 
-    // live = (ev_start_time - runstarttime) / 60. / 60 / 24; // days
     live = (lastTimeStamp - runstarttime) / 60. / 60 / 24; // days
 
     if (verbose)
@@ -677,6 +685,8 @@ int main(int argc, char **argv)
     tg_ph_q->GetYaxis()->SetRangeUser(areaMin, areaMax);
     tg_ph_q->Draw("AP");
     tg_ph_q_veto->Draw("P");
+    gSpLim->Draw("L same");
+    gAreaLim->Draw("L same");
     TLegend *leg_ph_q = new TLegend(0.70, 0.8, 0.90, 0.9);
     leg_ph_q->SetFillColor(0);
     leg_ph_q->SetFillStyle(0);
@@ -812,20 +822,15 @@ int main(int argc, char **argv)
     leg_rate->AddEntry(g_po214_rate, "214Po+ rate", "pl");
     leg_rate->AddEntry(g_po218_rate, "218Po+ rate", "pl");
 
-    // lat.SetNDC(2);
-    // lat.SetTextSize(0.06);
     lat.DrawLatex(0.2, 0.87, Form("DATA:%s", infile.c_str()));
     lat.DrawLatex(0.2, 0.82, Form("DETECTOR:RD%d", det_id + 1));
     lat.SetTextColor(col_Po214);
-    // if (show_Po214 == 1)
     if (show_Po214)
         lat.DrawLatex(0.2, 0.77, Form("Po214: %.1f +- %.1f cpd.", po214_rate_fit, po214_rate_fit_err));
     lat.SetTextColor(col_Po218);
-    // if (show_Po218 == 1)
     if (show_Po218)
         lat.DrawLatex(0.2, 0.72, Form("Po218: %.1f +- %.1f cpd.", po218_rate_fit, po218_rate_fit_err));
     lat.SetTextColor(col_Po212);
-    // if (show_Po212 == 1)
     if (show_Po212)
         lat.DrawLatex(0.2, 0.67, Form("Po212: %.1f +- %.1f cpd.", po212_rate_fit, po212_rate_fit_err));
 
@@ -847,7 +852,6 @@ int main(int argc, char **argv)
     h_ph->Write();
     h_q->Write();
     h_ene->Write();
-    // h_ph_q->Write();
     h_poraw->Write();
     h_po212->Write();
     h_po214->Write();
