@@ -2,24 +2,36 @@
 Softwares for NEWAGE radon detectors. DAQ with ALADM 2000 and analysis with ROOT framework.
 Detail info. will be found here: https://ppwww.phys.sci.kobe-u.ac.jp/~newage/wiki/?RD-DAQ
 
-
+```
 $ cd ~/
 $ git clone https://github.com/kobeDM/RDsoft
+```
 
-##requires boost
+## Requires boost
+```
 $ sudo apt install libboost-dev
+```
 
 ## DAQ
-### setup
+### Setup
 Install adalm drivers following the REAEDME in 
 https://github.com/kobeDM/adalm
+
+If you do not want to build `RD-daq` and the `libm2k` dependent parts, disable it at CMake configure time.
+
+```
+$ cd RDsoft
+$ mkdir build && cd build && cmake ../source -DBUILD_RDDAQ=OFF && make && make install
+```
+
+If you want to build `RD-daq` as well, use the default configure command.
 
 ```
 $ cd RDsoft
 $ mkdir build && cd build && cmake ../source && make && make install
 ```
 
-### run
+### Run
 ```
 $ cd ~RD?/data (?=1 or 2 or 3)
 $ runRD-daq.py (daq runner, use with adalm) 
@@ -29,13 +41,13 @@ $ RD-daqkiller.py (daq killer)
 ```
 
 
-## analysis
+## Analysis
 Here quick analysis will be performed by: 
 ```
 $ cd ~RD?/data (?=1 or 2 or 3)
 $ runRD-ana.py (analysis runner) 
 ```
-## analysis including influxdb update
+## Analysis including influxdb update
 Grafana monitoring will be performed by: 
 ```
 # If you want to output a result plot, use ssh key authentication.
