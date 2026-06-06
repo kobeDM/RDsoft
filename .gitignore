@@ -1,4 +1,4 @@
-bin/*
-!bin/*.py
-build/*
+bin
+build
 .vscode
+__pycache__

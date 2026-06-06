@@ -1,0 +1,8 @@
+{
+    "subentries": 1000,
+    "sampling_rate": 10000000,
+    "sampling_num": 1024,
+    "dynamic_range": 1,
+    "trigger_src": 0,
+    "trigger_type": 0
+}

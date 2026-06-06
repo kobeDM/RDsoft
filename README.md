@@ -47,6 +47,25 @@ Here quick analysis will be performed by:
 $ cd ~RD?/data (?=1 or 2 or 3)
 $ runRD-ana.py (analysis runner) 
 ```
+
+If you want to exclude events from analysis by time range, prepare `config/RD-exclude.json` and pass it with `-x`.
+Each event timestamp is read from the `#Ev.` header line in each `.dat` file, and you can list multiple excluded periods.
+
+```json
+{
+	"excluded_periods": [
+		{"start": "2026-05-01 12:00:00", "end": "2026-05-01 13:00:00"},
+		{"start": "2026-05-02 09:30:00", "end": "2026-05-02 10:15:00"}
+	]
+}
+```
+
+Run analysis with the exclusion config:
+
+```bash
+$ runRD-ana.py -x /path/to/RDsoft/config/RD-exclude.json
+```
+
 ## Analysis including influxdb update
 Grafana monitoring will be performed by: 
 ```
@@ -56,3 +75,5 @@ $ nohup runRD-mon.py &(monitoring runner including auto analysis)
 access http://10.37.0.216:3000/
 check the energy spectrum on na16:~/RD?/ana/YYYYmmDD/rnrate.png
 ```
+
+`runRD-mon.py` also uses the same exclusion config and skips events whose `#Ev.` header timestamp falls inside any excluded period.
