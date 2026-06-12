@@ -5,6 +5,8 @@ import time
 import json
 import argparse
 import shutil
+import subprocess
+import tempfile
 from glob import glob
 from datetime import datetime
 from influxdb import InfluxDBClient
@@ -93,25 +95,58 @@ def write_to_influxdb(client, data_points, batch_size=1000):
         client.write_points(batch)
 
 
-def copy_result_plots(ana_dir, img_dir, detector_name=""):
-    # check if img_dir exists
-    if not os.path.exists(img_dir):
-        print(f"Error: Image directory {img_dir} does not exist.")
+def copy_result_plots(ana_dir, grafana_config, detector_name=""):
+    if not grafana_config.get("activate", False):
+        return
+
+    host = grafana_config.get("host", "")
+    hostuser = grafana_config.get("hostuser", "")
+    img_dir = grafana_config.get("img_dir", "")
+    if not host or not hostuser or not img_dir:
+        print("Error: grafana configuration requires host, hostuser, and img_dir.")
         exit(1)
-    
+
     # get latest run name
     dirs = [
         d.name for d in Path(ana_dir).iterdir()
         if d.is_dir() and '20' in d.name
     ]
+    if not dirs:
+        print(f"Warning: No run directories found in {ana_dir}")
+        return
+
     target_run = max(dirs)
     plot_files = glob(os.path.join(ana_dir, target_run, "*.png"))
+    if not plot_files:
+        print(f"Warning: No plot files found in {os.path.join(ana_dir, target_run)}")
+        return
 
-    # copy plot files to img_dir
-    for plot_file in plot_files:
-        dest_file = os.path.join(img_dir, f"{os.path.basename(plot_file).split('.')[0]}_{detector_name}.png")
-        shutil.copy(plot_file, dest_file)
-        print(f"Copied plot {plot_file} to {dest_file}")
+    remote_target = f"{hostuser}@{host}:{img_dir.rstrip('/')}/"
+
+    # Stage renamed files locally, then rsync to remote host.
+    with tempfile.TemporaryDirectory(prefix="rdmon_plots_") as tmp_dir:
+        for plot_file in plot_files:
+            dest_file = os.path.join(tmp_dir, f"{os.path.basename(plot_file).split('.')[0]}_{detector_name}.png")
+            shutil.copy(plot_file, dest_file)
+
+        rsync_cmd = [
+            "rsync",
+            "-rv",
+            f"{tmp_dir}/",
+            remote_target,
+        ]
+
+        try:
+            result = subprocess.run(rsync_cmd, check=True, capture_output=True, text=True)
+            if result.stdout.strip():
+                print(result.stdout.strip())
+            print(f"Synced plots to {remote_target}")
+        except FileNotFoundError:
+            print("Error: rsync command not found.")
+            exit(1)
+        except subprocess.CalledProcessError as e:
+            print(f"Error: rsync failed: {e.stderr.strip()}")
+            exit(1)
 
 
 def main():
@@ -145,7 +180,7 @@ def main():
             ana_dir = detector_config[detector_id].get("ana_dir", "")
             os.chdir(ana_dir)
             run_rd_ana(ANA_CONFIG)
-            copy_result_plots(ana_dir, config.get("grafana", "").get("img_dir", ""), detector_config[detector_id].get("detector", ""))
+            copy_result_plots(ana_dir, config.get("grafana", {}), detector_config[detector_id].get("detector", ""))
 
             # send data to InfluxDB
             rate_file_paths = get_rate_file_paths(ana_dir)

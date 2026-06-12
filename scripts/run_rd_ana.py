@@ -219,8 +219,8 @@ def run_rd_ana(config_path, verbose_flag=False, period=None):
         print("Error: Could not find RD directory in analysis path.")
         exit(1)
 
-    print(f"Running CalcRnRate for detector {target_detector}...")
 
+    print(f"Running CalcRnRate for detector {target_detector}...")
     calc_rnrate_cmd = f"{CALC_RNRATE} -i {os.path.join(analysis_dir, ROOT_FILE_DIR, CHAIN_ROOT_FILE)} -o {analysis_dir} -c {target_config_path} -d {target_detector} -m {monitor_dir}"
     if verbose_flag:
         calc_rnrate_cmd += " -v"
