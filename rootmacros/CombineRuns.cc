@@ -111,14 +111,15 @@ void CombineRuns( const std::string &run_list_file, const std::string &output_di
     }
 
     TCanvas *c_rnrate = new TCanvas( "c_rnrate", "Rn rate", 800, 600 );
-    tg_po214_combined->SetLineColor( kCyan + 2 );
-    tg_po218_combined->SetLineColor( kMagenta + 2 );
+    tg_po214_combined->SetLineColor( kMagenta + 2 );
+    tg_po218_combined->SetLineColor( kCyan + 2 );
     tg_po212_combined->SetLineColor( kGreen + 2 );
-    tg_po214_combined->SetMarkerColor( kCyan + 2 );
-    tg_po218_combined->SetMarkerColor( kMagenta + 2 );
+    tg_po214_combined->SetMarkerColor( kMagenta + 2 );
+    tg_po218_combined->SetMarkerColor( kCyan + 2 );
     tg_po212_combined->SetMarkerColor( kGreen + 2 );
     tg_po214_combined->GetXaxis( )->SetTitle( "Elapsed time (days)" );
     tg_po214_combined->GetYaxis( )->SetTitle( "Rn rate (counts/day)" );
+    tg_po214_combined->SetMaximum( 10 );
     tg_po214_combined->Draw( "AP" );
     tg_po218_combined->Draw( "P SAME" );
     tg_po212_combined->Draw( "P SAME" );

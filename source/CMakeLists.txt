@@ -29,7 +29,6 @@ endif()
 add_executable(Dat2Root "Dat2Root.cc")
 add_executable(CalcRnRate "CalcRnRate.cc")
 
-
 target_link_libraries(Dat2Root PRIVATE ROOT::RIO ROOT::Net ROOT::Tree)
 target_link_libraries(CalcRnRate PRIVATE ROOT::RIO ROOT::Net ROOT::Tree ROOT::Hist ROOT::Graf ROOT::Gpad)
 

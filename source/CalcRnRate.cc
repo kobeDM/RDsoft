@@ -22,6 +22,10 @@
 
 const int PEDESTAL_SAMPLES = 100;
 const int ADC_MAX          = 4096;
+const int CLOCK_MAX        = 1024;
+
+const int WF_WIN_START = 480;
+const int WF_WIN_END   = 580;
 
 const double ENE_PO218 = 6.00235;
 const double ENE_PO214 = 7.68682;
@@ -170,15 +174,16 @@ int main( int argc, char *argv[] )
     Long64_t nentries = tree->GetEntries( );
     std::cout << "Number of entries in the tree: " << nentries << std::endl;
 
-    ULong64_t t_event_id;
-    ULong64_t t_timestamp;
-    ULong64_t t_timestamp_end;
-    double    t_pedestal;
-    int       t_p_max;
-    int       t_p_min;
-    int       t_p_sum;
-    int       t_t_max;
-    int       t_t_min;
+    ULong64_t      t_event_id;
+    ULong64_t      t_timestamp;
+    ULong64_t      t_timestamp_end;
+    double         t_pedestal;
+    int            t_p_max;
+    int            t_p_min;
+    int            t_p_sum;
+    int            t_t_max;
+    int            t_t_min;
+    unsigned short t_ch[CLOCK_MAX];
     tree->SetBranchAddress( "event_id", &t_event_id );
     tree->SetBranchAddress( "timestamp", &t_timestamp );
     tree->SetBranchAddress( "timestamp_end", &t_timestamp_end );
@@ -188,6 +193,7 @@ int main( int argc, char *argv[] )
     tree->SetBranchAddress( "p_sum_ch1", &t_p_sum );
     tree->SetBranchAddress( "t_max_ch1", &t_t_max );
     tree->SetBranchAddress( "t_min_ch1", &t_t_min );
+    tree->SetBranchAddress( "ch1", t_ch );
 
     TH1D         *h_spectrum          = new TH1D( "h_spectrum", "h_spectrum", spMbin, spMmin, spMmax );
     TH1D         *h_po214             = new TH1D( "h_po214", "h_po214", spMbin, spMmin, spMmax );
@@ -205,6 +211,9 @@ int main( int argc, char *argv[] )
     TH2D         *h_ph_area_all       = new TH2D( "h_ph_area_all", "h_ph_area_all", spbin, spmin, spmax, spbin, 0, 100000 );
     TH2D         *h_ph_area           = new TH2D( "h_ph_area", "h_ph_area", spbin, spmin, spmax, spbin, 0, 100000 );
     TH1D         *h_ped               = new TH1D( "h_ped", "h_ped", spbin, -spmax * 0.1, spmax * 0.1 );
+    TH2D         *h_waveform_all      = new TH2D( "h_waveform_all", "h_waveform_all", CLOCK_MAX, 0, CLOCK_MAX, ADC_MAX, -ADC_MAX * 0.5, ADC_MAX * 0.5 );
+    TH2D         *h_waveform          = new TH2D( "h_waveform", "h_waveform", CLOCK_MAX, 0, CLOCK_MAX, ADC_MAX, -ADC_MAX * 0.5, ADC_MAX * 0.5 );
+    TH2D         *h_waveform_us       = new TH2D( "h_waveform_us", "h_waveform_us", CLOCK_MAX, 0, CLOCK_MAX / sampling_hertz * 1e6, ADC_MAX, -1.0, 1.0 );
     TGraphErrors *tg_po214            = new TGraphErrors( );
     TGraphErrors *tg_po218            = new TGraphErrors( );
     TGraphErrors *tg_po212            = new TGraphErrors( );
@@ -245,6 +254,9 @@ int main( int argc, char *argv[] )
         double pedestal   = t_pedestal * cal_factor;
         double ene        = cal_a * ph + cal_b;
 
+        for ( int clock = 0; clock < CLOCK_MAX; clock++ )
+            h_waveform_all->Fill( clock, static_cast<double>( t_ch[clock] ) - t_pedestal );
+
         // event selection
         const double cal_ph = dynamic_range / static_cast<double>( ADC_MAX ) * 0.5 * 1000.0;  // (V / (ADC * 0.001))
         h_spectrum_ph_all->Fill( ph * cal_ph );
@@ -272,6 +284,14 @@ int main( int argc, char *argv[] )
         h_spectrum_area->Fill( area );
         h_ph_area->Fill( ph * cal_ph, area );
         h_pmin_pmax->Fill( pmin * cal_ph, ph * cal_ph );
+        for ( int clock = 0; clock < CLOCK_MAX; clock++ ) {
+            double wf_ph   = ( static_cast<double>( t_ch[clock] ) - t_pedestal );
+            double time_us = static_cast<double>( clock ) / sampling_hertz * 1e6;
+            double wf_v    = wf_ph * cal_ph * cal_factor;
+            h_waveform->Fill( clock, wf_ph );
+            h_waveform_us->Fill( time_us, wf_v );
+        }
+
         if ( ene > po214_roi_min && ene < po214_roi_max ) {
             h_po214->Fill( ene );
             if ( time_in_days > integ_win_start_in_days && time_in_days < integ_win_end_in_days ) {
@@ -476,6 +496,7 @@ int main( int argc, char *argv[] )
     c_rate->cd( 3 );
     tg_po218->GetXaxis( )->SetTitle( "Elapsed days" );
     tg_po218->GetYaxis( )->SetTitle( "Event rate (events/day)" );
+    tg_po218->SetMaximum( show_rate_max );
     tg_po218->SetMarkerColor( kCyan + 2 );
     tg_po214->SetMarkerColor( kMagenta + 2 );
     tg_po212->SetMarkerColor( kGreen + 2 );
@@ -543,8 +564,8 @@ int main( int argc, char *argv[] )
     // *** Parameter plot ***
     // **********************
 
-    TCanvas *c_vis = new TCanvas( "c_vis", "Visualization", 1200, 600 );
-    c_vis->Divide( 3, 2 );
+    TCanvas *c_vis = new TCanvas( "c_vis", "Visualization", 1200, 900 );
+    c_vis->Divide( 3, 3 );
     c_vis->cd( 1 );
     TPaveText *pt_vis[n_panel];
     for ( int i = 0; i < n_panel; i++ ) {
@@ -636,6 +657,33 @@ int main( int argc, char *argv[] )
     h_ped->SetFillStyle( 3001 );
     h_ped->Draw( "HIST" );
 
+    c_vis->cd( 7 );
+    c_vis->cd( 7 )->SetRightMargin( 0.11 );
+    c_vis->cd( 7 )->SetGridy( );
+    h_waveform_all->GetXaxis( )->SetTitle( Form( "Clock (%d MHz)", static_cast<int>( sampling_hertz * 1e-6 ) ) );
+    h_waveform_all->GetYaxis( )->SetTitle( "ADC counts" );
+    h_waveform_all->GetXaxis( )->SetRangeUser( WF_WIN_START, WF_WIN_END );
+    h_waveform_all->SetLineColor( kBlue + 2 );
+    h_waveform_all->Draw( "COLZ" );
+
+    c_vis->cd( 8 );
+    c_vis->cd( 8 )->SetRightMargin( 0.11 );
+    c_vis->cd( 8 )->SetGridy( );
+    h_waveform->GetXaxis( )->SetTitle( Form( "Clock (%d MHz)", static_cast<int>( sampling_hertz * 1e-6 ) ) );
+    h_waveform->GetYaxis( )->SetTitle( "ADC counts" );
+    h_waveform->GetXaxis( )->SetRangeUser( WF_WIN_START, WF_WIN_END );
+    h_waveform->SetLineColor( kRed + 2 );
+    h_waveform->Draw( "COLZ" );
+
+    c_vis->cd( 9 );
+    c_vis->cd( 9 )->SetRightMargin( 0.11 );
+    c_vis->cd( 9 )->SetGridy( );
+    h_waveform_us->GetXaxis( )->SetTitle( "Time (#mus)" );
+    h_waveform_us->GetYaxis( )->SetTitle( "Pulse height (V)" );
+    h_waveform_us->GetXaxis( )->SetRangeUser( WF_WIN_START / sampling_hertz * 1e6, WF_WIN_END / sampling_hertz * 1e6 );
+    h_waveform_us->SetLineColor( kRed + 2 );
+    h_waveform_us->Draw( "COLZ" );
+
     c_rate->SaveAs( Form( "%s/rnrate.png", output_directory.c_str( ) ) );
     // c_rate->SaveAs( Form( "%s/rnrate_%s.pdf", output_directory.c_str( ), input_file.c_str( ) ) );
 
@@ -670,6 +718,8 @@ int main( int argc, char *argv[] )
     f_po214->Write( "f_po214" );
     f_po218->Write( "f_po218" );
     f_po212->Write( "f_po212" );
+    h_waveform_all->Write( );
+    h_waveform->Write( );
     output->Close( );
 
     std::cout << "### CalcRnRate Done ###" << std::endl;
