@@ -496,6 +496,7 @@ int main( int argc, char *argv[] )
     c_rate->cd( 3 );
     tg_po218->GetXaxis( )->SetTitle( "Elapsed days" );
     tg_po218->GetYaxis( )->SetTitle( "Event rate (events/day)" );
+    tg_po218->SetMinimum( 0 );
     tg_po218->SetMaximum( show_rate_max );
     tg_po218->SetMarkerColor( kCyan + 2 );
     tg_po214->SetMarkerColor( kMagenta + 2 );
@@ -513,51 +514,51 @@ int main( int argc, char *argv[] )
     tg_po214->Draw( "P SAME" );
     tg_po212->Draw( "P SAME" );
 
-    TF1 *f_po214 = new TF1( "f_po214", "[0]*(1-exp(-(x+[2])/[1]))", fit_win_start_in_days, fit_win_end_in_days );
-    f_po214->SetParameter( 0, show_rate_max );
-    f_po214->SetParameter( 1, T_RADON220 );
-    f_po214->SetParameter( 2, measurement_offset_in_days );
     TF1 *f_po218 = new TF1( "f_po218", "[0]*(1-exp(-(x+[2])/[1]))", fit_win_start_in_days, fit_win_end_in_days );
     f_po218->SetParameter( 0, show_rate_max );
-    f_po218->SetParameter( 1, T_RADON220 );
-    f_po218->SetParameter( 2, measurement_offset_in_days );
+    f_po218->FixParameter( 1, T_RADON220 );
+    f_po218->FixParameter( 2, measurement_offset_in_days );
+    TF1 *f_po214 = new TF1( "f_po214", "[0]*(1-exp(-(x+[2])/[1]))", fit_win_start_in_days, fit_win_end_in_days );
+    f_po214->SetParameter( 0, show_rate_max );
+    f_po214->FixParameter( 1, T_RADON220 );
+    f_po214->FixParameter( 2, measurement_offset_in_days );
     TF1 *f_po212 = new TF1( "f_po212", "[0]", fit_win_start_in_days, fit_win_end_in_days );
 
-    tg_po214->Fit( f_po214, "Q", "", fit_win_start_in_days, fit_win_end_in_days );
     tg_po218->Fit( f_po218, "Q", "", fit_win_start_in_days, fit_win_end_in_days );
+    tg_po214->Fit( f_po214, "Q", "", fit_win_start_in_days, fit_win_end_in_days );
     tg_po212->Fit( f_po212, "Q", "", fit_win_start_in_days, fit_win_end_in_days );
-    f_po214->Draw( "SAME" );
     f_po218->Draw( "SAME" );
+    f_po214->Draw( "SAME" );
     f_po212->Draw( "SAME" );
 
-    const double po214_const     = f_po214->GetParameter( 0 );
-    const double po214_const_err = f_po214->GetParError( 0 );
     const double po218_const     = f_po218->GetParameter( 0 );
     const double po218_const_err = f_po218->GetParError( 0 );
+    const double po214_const     = f_po214->GetParameter( 0 );
+    const double po214_const_err = f_po214->GetParError( 0 );
     const double po212_const     = f_po212->GetParameter( 0 );
     const double po212_const_err = f_po212->GetParError( 0 );
-    std::cout << "Po-214 const: " << po214_const << " +/- " << po214_const_err << std::endl;
     std::cout << "Po-218 const: " << po218_const << " +/- " << po218_const_err << std::endl;
+    std::cout << "Po-214 const: " << po214_const << " +/- " << po214_const_err << std::endl;
     std::cout << "Po-212 const: " << po212_const << " +/- " << po212_const_err << std::endl;
 
     TLatex *latex = new TLatex( );
     latex->SetNDC( );
     latex->SetTextSize( 0.04 );
     latex->SetTextColor( kCyan + 2 );
-    latex->DrawLatex( 0.2, 0.8, Form( "Po-214: %.2f #pm %.2f", po214_const, po214_const_err ) );
+    latex->DrawLatex( 0.2, 0.8, Form( "Po-218: %.2f #pm %.2f", po218_const, po218_const_err ) );
     latex->SetTextColor( kMagenta + 2 );
-    latex->DrawLatex( 0.2, 0.75, Form( "Po-218: %.2f #pm %.2f", po218_const, po218_const_err ) );
+    latex->DrawLatex( 0.2, 0.75, Form( "Po-214: %.2f #pm %.2f", po214_const, po214_const_err ) );
     latex->SetTextColor( kGreen + 2 );
     latex->DrawLatex( 0.2, 0.70, Form( "Po-212: %.2f #pm %.2f", po212_const, po212_const_err ) );
 
-    f_po214->SetLineColor( kMagenta + 2 );
     f_po218->SetLineColor( kCyan + 2 );
+    f_po214->SetLineColor( kMagenta + 2 );
     f_po212->SetLineColor( kGreen + 2 );
-    f_po214->SetLineWidth( 2 );
     f_po218->SetLineWidth( 2 );
+    f_po214->SetLineWidth( 2 );
     f_po212->SetLineWidth( 2 );
-    f_po214->Draw( "SAME" );
     f_po218->Draw( "SAME" );
+    f_po214->Draw( "SAME" );
     f_po212->Draw( "SAME" );
 
     // **********************
