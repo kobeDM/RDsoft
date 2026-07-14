@@ -71,6 +71,7 @@ def run_daq(th_voltage):
         str(th_voltage),
         str(trigger_source),
         str(trigger_type),
+	"comment"
     ]
     run_command(cmd)
 
