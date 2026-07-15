@@ -3,9 +3,13 @@
         "cal_factor_a_RD1": 8.1,
         "cal_factor_a_RD2": 17.9,
         "cal_factor_a_RD3": 7.2,
+        "cal_factor_a_RD4": 7.2,
+        "cal_factor_a_RD5": 7.2,
         "cal_factor_b_RD1": 0,
         "cal_factor_b_RD2": 0,
         "cal_factor_b_RD3": 0,
+        "cal_factor_b_RD4": 0,
+        "cal_factor_b_RD5": 0,
         "neg_veto_factor": -0.5,
         "twin_avg_start_us": 40,
         "twin_avg_window_us": 5,
@@ -20,7 +24,8 @@
         "fit_win_start_in_days": 0.0,
         "fit_win_end_in_days": 50.0,
         "area_threshold": 0.0,
-        "pulse_height_threshold": 0.0
+        "pulse_height_threshold": 0.0,
+        "exclude_unixtime_ranges": []
     },
     "view": {
         "show_Po214": 1,

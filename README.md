@@ -48,23 +48,22 @@ $ cd ~RD?/data (?=1 or 2 or 3)
 $ runRD-ana.py (analysis runner) 
 ```
 
-If you want to exclude events from analysis by time range, prepare `config/RD-exclude.json` and pass it with `-x`.
-Each event timestamp is read from the `#Ev.` header line in each `.dat` file, and you can list multiple excluded periods.
+If you want to exclude events from analysis by time range, edit the analysis config in `config/RD-anaconfig.json` and add one or more time windows under `ana.exclude_unixtime_ranges`.
+Each entry should contain a Unix time `start` and `end` value, and any event whose time span overlaps one of these intervals is skipped.
+The excluded live time is also removed from the rate normalization, so both the plotted rate values and the associated error bars are corrected accordingly.
 
 ```json
 {
-	"excluded_periods": [
-		{"start": "2026-05-01 12:00:00", "end": "2026-05-01 13:00:00"},
-		{"start": "2026-05-02 09:30:00", "end": "2026-05-02 10:15:00"}
-	]
+  "ana": {
+    "exclude_unixtime_ranges": [
+      {"start": 1710000000, "end": 1710003600},
+      {"start": 1710010000, "end": 1710015000}
+    ]
+  }
 }
 ```
 
-Run analysis with the exclusion config:
-
-```bash
-$ runRD-ana.py -x /path/to/RDsoft/config/RD-exclude.json
-```
+The same excluded intervals are shown as gray shaded bands in the rate plot for quick visual inspection.
 
 ## Analysis including influxdb update
 Grafana monitoring will be performed by: 

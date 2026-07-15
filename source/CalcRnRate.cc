@@ -1,12 +1,16 @@
+#include <algorithm>
 #include <ctime>
 #include <getopt.h>
 #include <iostream>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
 #include "TAxis.h"
+#include "TBox.h"
 #include "TCanvas.h"
 #include "TF1.h"
 #include "TFile.h"
@@ -32,6 +36,54 @@ const double ENE_PO214 = 7.68682;
 const double ENE_PO212 = 8.785;
 
 const double T_RADON220 = 3.824 / log( 2.0 );
+
+using UnixTimeRange = std::pair<ULong64_t, ULong64_t>;
+
+bool IsExcludedTimeRange( ULong64_t start_time, ULong64_t end_time, const std::vector<UnixTimeRange> &exclude_ranges )
+{
+    for ( const auto &range : exclude_ranges ) {
+        if ( range.first == 0 && range.second == 0 ) {
+            continue;
+        }
+        if ( range.second < range.first ) {
+            continue;
+        }
+        if ( end_time < range.first || start_time > range.second ) {
+            continue;
+        }
+        return true;
+    }
+    return false;
+}
+
+double GetEffectiveExposureDays( double start_days, double end_days, ULong64_t run_start_time, const std::vector<UnixTimeRange> &exclude_ranges )
+{
+    if ( end_days <= start_days ) {
+        return 0.0;
+    }
+
+    const double    seconds_per_day = 24.0 * 60.0 * 60.0;
+    const ULong64_t start_abs       = static_cast<ULong64_t>( run_start_time + start_days * seconds_per_day );
+    const ULong64_t end_abs         = static_cast<ULong64_t>( run_start_time + end_days * seconds_per_day );
+
+    double effective_days = end_days - start_days;
+    for ( const auto &range : exclude_ranges ) {
+        if ( range.first == 0 && range.second == 0 ) {
+            continue;
+        }
+        if ( range.second < range.first ) {
+            continue;
+        }
+
+        const ULong64_t overlap_start = std::max( start_abs, range.first );
+        const ULong64_t overlap_end   = std::min( end_abs, range.second );
+        if ( overlap_end > overlap_start ) {
+            effective_days -= static_cast<double>( overlap_end - overlap_start ) / seconds_per_day;
+        }
+    }
+
+    return std::max( 0.0, effective_days );
+}
 
 int main( int argc, char *argv[] )
 {
@@ -108,6 +160,22 @@ int main( int argc, char *argv[] )
     cal_a = pt.get<double>( "ana.cal_factor_a_" + detector_name );
     cal_b = pt.get<double>( "ana.cal_factor_b_" + detector_name );
 
+    // Parse optional exclusion windows from the analysis config.
+    // The implementation accepts either the new list-based format or the
+    // legacy single-range fields for backward compatibility.
+    std::vector<UnixTimeRange> exclude_ranges;
+    const auto                 exclude_ranges_node = pt.get_child_optional( "ana.exclude_unixtime_ranges" );
+    if ( exclude_ranges_node ) {
+        for ( const auto &item : *exclude_ranges_node ) {
+            const auto     &range_node  = item.second;
+            const ULong64_t range_start = static_cast<ULong64_t>( range_node.get<double>( "start", 0.0 ) );
+            const ULong64_t range_end   = static_cast<ULong64_t>( range_node.get<double>( "end", 0.0 ) );
+            if ( range_start != 0 || range_end != 0 ) {
+                exclude_ranges.emplace_back( range_start, range_end );
+            }
+        }
+    }
+
     double show_rate_max = pt.get<double>( "view.show_rate_max" );
 
     double    Toffset      = 0;
@@ -143,6 +211,10 @@ int main( int argc, char *argv[] )
         std::cout << "FIT WIN END            : " << fit_win_end_in_days << " (days)" << std::endl;
         std::cout << "AREA THRESHOLD         : " << area_threshold << std::endl;
         std::cout << "PULSE HEIGHT THRESHOLD : " << pulse_height_threshold << std::endl;
+        std::cout << "EXCLUDE UNIXTIME RANGES: " << exclude_ranges.size( ) << std::endl;
+        for ( std::size_t i = 0; i < exclude_ranges.size( ); ++i ) {
+            std::cout << "  RANGE " << i << " : " << exclude_ranges[i].first << " - " << exclude_ranges[i].second << std::endl;
+        }
         std::cout << "CAL FACTOR A " << detector_name << "      : " << cal_a << std::endl;
         std::cout << "CAL FACTOR B " << detector_name << "      : " << cal_b << std::endl;
         std::cout << "SHOW RATE MAX          : " << show_rate_max << std::endl;
@@ -257,6 +329,14 @@ int main( int argc, char *argv[] )
         for ( int clock = 0; clock < CLOCK_MAX; clock++ )
             h_waveform_all->Fill( clock, static_cast<double>( t_ch[clock] ) - t_pedestal );
 
+        // Reject events whose time span overlaps any excluded interval.
+        // This keeps the selected sample consistent with the intended live time.
+        const ULong64_t event_start = t_timestamp;
+        const ULong64_t event_end   = t_timestamp_end > t_timestamp ? t_timestamp_end : t_timestamp;
+        if ( IsExcludedTimeRange( event_start, event_end, exclude_ranges ) ) {
+            continue;
+        }
+
         // event selection
         const double cal_ph = dynamic_range / static_cast<double>( ADC_MAX ) * 0.5 * 1000.0;  // (V / (ADC * 0.001))
         h_spectrum_ph_all->Fill( ph * cal_ph );
@@ -321,29 +401,35 @@ int main( int argc, char *argv[] )
     }
 
     std::cout << "Last time in days: " << last_time_in_days << std::endl;
+    const double total_live_time_days = GetEffectiveExposureDays( 0.0, last_time_in_days, runstarttime, exclude_ranges );
+    std::cout << "Effective livetime in days: " << total_live_time_days << std::endl;
 
+    // Compute the effective exposure for each time bin by subtracting any
+    // excluded intervals from the nominal bin width. The same correction is
+    // applied to the rate errors so that both the values and uncertainties
+    // are normalized to the remaining live time.
     int n_last_bin = static_cast<int>( last_time_in_days / time_win_hour * 24. ) + 1;
     for ( int bin = 0; bin < n_last_bin; bin++ ) {
-        double time           = ( static_cast<double>( bin ) + 0.5 ) * time_win_hour / 24.;
-        double rate_po214     = po214_count[bin] / time_win_hour * 24.;
-        double rate_po218     = po218_count[bin] / time_win_hour * 24.;
-        double rate_po212     = po212_count[bin] / time_win_hour * 24.;
-        double time_err       = time_win_hour / 24. / 2.;
-        double rate_po214_err = sqrt( po214_count[bin] ) / time_win_hour * 24.;
-        double rate_po218_err = sqrt( po218_count[bin] ) / time_win_hour * 24.;
-        double rate_po212_err = sqrt( po212_count[bin] ) / time_win_hour * 24.;
+        const double bin_start_days = static_cast<double>( bin ) * time_win_hour / 24.;
+        const double bin_end_days   = ( bin == n_last_bin - 1 ) ? last_time_in_days : static_cast<double>( bin + 1 ) * time_win_hour / 24.;
+        const double effective_time = GetEffectiveExposureDays( bin_start_days, bin_end_days, runstarttime, exclude_ranges );
 
-        // last bin correction
-        if ( bin == n_last_bin - 1 ) {
-            double effective_time = last_time_in_days - static_cast<double>( bin ) * time_win_hour / 24.;
-            time                  = effective_time * 0.5 + ( static_cast<double>( bin ) ) * time_win_hour / 24.;
-            time_err              = effective_time * 0.5;
-            rate_po214            = po214_count[bin] / effective_time;
-            rate_po218            = po218_count[bin] / effective_time;
-            rate_po212            = po212_count[bin] / effective_time;
-            rate_po214_err        = sqrt( po214_count[bin] ) / effective_time;
-            rate_po218_err        = sqrt( po218_count[bin] ) / effective_time;
-            rate_po212_err        = sqrt( po212_count[bin] ) / effective_time;
+        double time           = 0.5 * ( bin_start_days + bin_end_days );
+        double time_err       = 0.5 * ( bin_end_days - bin_start_days );
+        double rate_po214     = 0.0;
+        double rate_po218     = 0.0;
+        double rate_po212     = 0.0;
+        double rate_po214_err = 0.0;
+        double rate_po218_err = 0.0;
+        double rate_po212_err = 0.0;
+
+        if ( effective_time > 0.0 ) {
+            rate_po214     = po214_count[bin] / effective_time;
+            rate_po218     = po218_count[bin] / effective_time;
+            rate_po212     = po212_count[bin] / effective_time;
+            rate_po214_err = sqrt( po214_count[bin] ) / effective_time;
+            rate_po218_err = sqrt( po218_count[bin] ) / effective_time;
+            rate_po212_err = sqrt( po212_count[bin] ) / effective_time;
         }
 
         tg_po214->SetPoint( bin, time, rate_po214 );
@@ -359,24 +445,29 @@ int main( int argc, char *argv[] )
     const std::string rate_file_footer_po218 = "_po218.dat";
     const std::string rate_file_footer_po212 = "_po212.dat";
 
+    // Write daily monitor files using the same effective exposure logic as the
+    // time-bin rates so that the per-day outputs remain consistent with the
+    // plotted rate values.
     int n_last_day_bin = static_cast<int>( last_time_in_days ) + 1;
     for ( int day = 0; day < n_last_day_bin; day++ ) {
-        double rate_po214     = po214_count_day[day];
-        double rate_po218     = po218_count_day[day];
-        double rate_po212     = po212_count_day[day];
-        double rate_po214_err = sqrt( po214_count_day[day] );
-        double rate_po218_err = sqrt( po218_count_day[day] );
-        double rate_po212_err = sqrt( po212_count_day[day] );
+        const double day_start_days = static_cast<double>( day );
+        const double day_end_days   = ( day == n_last_day_bin - 1 ) ? last_time_in_days : static_cast<double>( day + 1 );
+        const double effective_time = GetEffectiveExposureDays( day_start_days, day_end_days, runstarttime, exclude_ranges );
 
-        // last day bin correction
-        if ( day == n_last_day_bin - 1 ) {
-            double effective_time = last_time_in_days - static_cast<double>( day );
-            rate_po214            = po214_count_day[day] / effective_time;
-            rate_po218            = po218_count_day[day] / effective_time;
-            rate_po212            = po212_count_day[day] / effective_time;
-            rate_po214_err        = sqrt( po214_count_day[day] ) / effective_time;
-            rate_po218_err        = sqrt( po218_count_day[day] ) / effective_time;
-            rate_po212_err        = sqrt( po212_count_day[day] ) / effective_time;
+        double rate_po214     = 0.0;
+        double rate_po218     = 0.0;
+        double rate_po212     = 0.0;
+        double rate_po214_err = 0.0;
+        double rate_po218_err = 0.0;
+        double rate_po212_err = 0.0;
+
+        if ( effective_time > 0.0 ) {
+            rate_po214     = po214_count_day[day] / effective_time;
+            rate_po218     = po218_count_day[day] / effective_time;
+            rate_po212     = po212_count_day[day] / effective_time;
+            rate_po214_err = sqrt( po214_count_day[day] ) / effective_time;
+            rate_po218_err = sqrt( po218_count_day[day] ) / effective_time;
+            rate_po212_err = sqrt( po212_count_day[day] ) / effective_time;
         }
 
         std::time_t start_time = static_cast<std::time_t>( runstarttime + static_cast<ULong64_t>( day ) * 24 * 60 * 60 );
@@ -429,16 +520,16 @@ int main( int argc, char *argv[] )
     pt_rnrate[2]->AddText( Form( "Analysis time: %s", time_str ) );
     pt_rnrate[3]->AddText( Form( "Detector: %s", detector_name.c_str( ) ) );
     pt_rnrate[4]->AddText( Form( "Calibration: slope = %.1f, intercept = %.1f", cal_a, cal_b ) );
-    pt_rnrate[5]->AddText( Form( "Livetime: %.2f days", last_time_in_days ) );
+    pt_rnrate[5]->AddText( Form( "Livetime: %.2f days", total_live_time_days ) );
     for ( int i = 6; i < n_panel; i++ ) {
         pt_rnrate[i]->AddText( Form( "N/A" ) );
     }
 
     c_rate->cd( 2 );
-    h_spectrum->Scale( 1.0 / h_spectrum->GetBinWidth( 1.0 ) / last_time_in_days );
-    h_po218->Scale( 1.0 / h_po218->GetBinWidth( 1.0 ) / last_time_in_days );
-    h_po214->Scale( 1.0 / h_po214->GetBinWidth( 1.0 ) / last_time_in_days );
-    h_po212->Scale( 1.0 / h_po212->GetBinWidth( 1.0 ) / last_time_in_days );
+    h_spectrum->Scale( 1.0 / h_spectrum->GetBinWidth( 1.0 ) / total_live_time_days );
+    h_po218->Scale( 1.0 / h_po218->GetBinWidth( 1.0 ) / total_live_time_days );
+    h_po214->Scale( 1.0 / h_po214->GetBinWidth( 1.0 ) / total_live_time_days );
+    h_po212->Scale( 1.0 / h_po212->GetBinWidth( 1.0 ) / total_live_time_days );
     h_po218_roi->Scale( 1.0 / h_po218_roi->GetBinWidth( 1.0 ) / ( integ_win_end_in_days - integ_win_start_in_days ) );
     h_po214_roi->Scale( 1.0 / h_po214_roi->GetBinWidth( 1.0 ) / ( integ_win_end_in_days - integ_win_start_in_days ) );
     h_po212_roi->Scale( 1.0 / h_po212_roi->GetBinWidth( 1.0 ) / ( integ_win_end_in_days - integ_win_start_in_days ) );
@@ -494,6 +585,7 @@ int main( int argc, char *argv[] )
     leg_sp->Draw( "SAME" );
 
     c_rate->cd( 3 );
+
     tg_po218->GetXaxis( )->SetTitle( "Elapsed days" );
     tg_po218->GetYaxis( )->SetTitle( "Event rate (events/day)" );
     tg_po218->SetMinimum( 0 );
@@ -513,6 +605,42 @@ int main( int argc, char *argv[] )
     tg_po218->Draw( "AP" );
     tg_po214->Draw( "P SAME" );
     tg_po212->Draw( "P SAME" );
+
+    std::vector<double> mask_x;
+    std::vector<double> mask_y;
+    for ( const auto &range : exclude_ranges ) {
+        if ( range.first == 0 && range.second == 0 ) {
+            continue;
+        }
+        if ( range.second < range.first ) {
+            continue;
+        }
+
+        const double x1 = std::max( 0.0, ( static_cast<double>( range.first - runstarttime ) ) / ( 24.0 * 60.0 * 60.0 ) );
+        const double x2 = std::max( x1, std::min( last_time_in_days, ( static_cast<double>( range.second - runstarttime ) ) / ( 24.0 * 60.0 * 60.0 ) ) );
+        if ( x2 <= x1 ) {
+            continue;
+        }
+
+        mask_x.push_back( x1 );
+        mask_y.push_back( 0.0 );
+        mask_x.push_back( x2 );
+        mask_y.push_back( 0.0 );
+        mask_x.push_back( x2 );
+        mask_y.push_back( show_rate_max );
+        mask_x.push_back( x1 );
+        mask_y.push_back( show_rate_max );
+        mask_x.push_back( x1 );
+        mask_y.push_back( 0.0 );
+    }
+
+    if ( !mask_x.empty( ) ) {
+        TGraph *tg_mask = new TGraph( static_cast<int>( mask_x.size( ) ), mask_x.data( ), mask_y.data( ) );
+        tg_mask->SetFillColor( kGray );
+        tg_mask->SetFillStyle( 3001 );
+        tg_mask->SetLineColor( kGray );
+        tg_mask->Draw( "F SAME" );
+    }
 
     TF1 *f_po218 = new TF1( "f_po218", "[0]*(1-exp(-(x+[2])/[1]))", fit_win_start_in_days, fit_win_end_in_days );
     f_po218->SetParameter( 0, show_rate_max );
@@ -580,7 +708,7 @@ int main( int argc, char *argv[] )
     pt_vis[1]->AddText( Form( "Data: %s", input_file.c_str( ) ) );
     pt_vis[2]->AddText( Form( "Analysis time: %s", time_str ) );
     pt_vis[3]->AddText( Form( "Detector: %s", detector_name.c_str( ) ) );
-    pt_vis[4]->AddText( Form( "Livetime: %.2f days", last_time_in_days ) );
+    pt_vis[4]->AddText( Form( "Livetime: %.2f days", total_live_time_days ) );
     for ( int i = 5; i < n_panel; i++ ) {
         pt_vis[i]->AddText( Form( "N/A" ) );
     }
