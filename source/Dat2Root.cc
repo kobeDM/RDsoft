@@ -60,18 +60,18 @@ int main( int argc, char *argv[] )
         return 1;
     }
 
-    ULong64_t      t_event_id      = -1;
-    ULong64_t      t_timestamp     = 0;
-    ULong64_t      t_timestamp_end = 0;
-    double         t_pedestal_ch1 = 0.0, t_pedestal_ch2 = 0.0;
-    int            t_p_max_ch1 = -10000, t_p_max_ch2 = -10000;
-    int            t_p_min_ch1 = 10000, t_p_min_ch2 = 10000;
-    int            t_p_sum_ch1 = 0, t_p_sum_ch2 = 0;
-    int            t_t_max_ch1 = -100, t_t_max_ch2 = -100;
-    int            t_t_min_ch1 = -100, t_t_min_ch2 = -100;
-    int            t_clock_max = CLOCK_MAX;
-    unsigned short t_ch1[CLOCK_MAX];
-    unsigned short t_ch2[CLOCK_MAX];
+    ULong64_t t_event_id      = -1;
+    ULong64_t t_timestamp     = 0;
+    ULong64_t t_timestamp_end = 0;
+    double    t_pedestal_ch1 = 0.0, t_pedestal_ch2 = 0.0;
+    int       t_p_max_ch1 = -10000, t_p_max_ch2 = -10000;
+    int       t_p_min_ch1 = 10000, t_p_min_ch2 = 10000;
+    int       t_p_sum_ch1 = 0, t_p_sum_ch2 = 0;
+    int       t_t_max_ch1 = -100, t_t_max_ch2 = -100;
+    int       t_t_min_ch1 = -100, t_t_min_ch2 = -100;
+    int       t_clock_max = CLOCK_MAX;
+    short     t_ch1[CLOCK_MAX];
+    short     t_ch2[CLOCK_MAX];
     tree->Branch( "event_id", &t_event_id, "event_id/l" );
     tree->Branch( "timestamp", &t_timestamp, "timestamp/l" );
     tree->Branch( "timestamp_end", &t_timestamp_end, "timestamp_end/l" );
@@ -88,8 +88,8 @@ int main( int argc, char *argv[] )
     tree->Branch( "t_min_ch1", &t_t_min_ch1, "t_min_ch1/I" );
     tree->Branch( "t_min_ch2", &t_t_min_ch2, "t_min_ch2/I" );
     tree->Branch( "clock_max", &t_clock_max, "clock_max/I" );
-    tree->Branch( "ch1", t_ch1, "ch1[clock_max]/s" );
-    tree->Branch( "ch2", t_ch2, "ch2[clock_max]/s" );
+    tree->Branch( "ch1", t_ch1, "ch1[clock_max]/S" );
+    tree->Branch( "ch2", t_ch2, "ch2[clock_max]/S" );
 
     std::ifstream infile( input_file );
     if ( !infile.is_open( ) ) {

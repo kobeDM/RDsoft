@@ -246,16 +246,16 @@ int main( int argc, char *argv[] )
     Long64_t nentries = tree->GetEntries( );
     std::cout << "Number of entries in the tree: " << nentries << std::endl;
 
-    ULong64_t      t_event_id;
-    ULong64_t      t_timestamp;
-    ULong64_t      t_timestamp_end;
-    double         t_pedestal;
-    int            t_p_max;
-    int            t_p_min;
-    int            t_p_sum;
-    int            t_t_max;
-    int            t_t_min;
-    unsigned short t_ch[CLOCK_MAX];
+    ULong64_t t_event_id;
+    ULong64_t t_timestamp;
+    ULong64_t t_timestamp_end;
+    double    t_pedestal;
+    int       t_p_max;
+    int       t_p_min;
+    int       t_p_sum;
+    int       t_t_max;
+    int       t_t_min;
+    short     t_ch[CLOCK_MAX];
     tree->SetBranchAddress( "event_id", &t_event_id );
     tree->SetBranchAddress( "timestamp", &t_timestamp );
     tree->SetBranchAddress( "timestamp_end", &t_timestamp_end );
