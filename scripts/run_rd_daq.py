@@ -27,8 +27,7 @@ def get_dir_name(base_name):
     counter = 1
     while True:
         dir_name = f"{base_name}_{counter}"
-        dir_path = os.path.join(RDSW, "data", dir_name)
-        if not os.path.exists(dir_path):
+        if not os.path.exists(dir_name):
             return dir_name
         counter += 1
 
