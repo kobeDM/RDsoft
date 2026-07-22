@@ -338,7 +338,7 @@ int main( int argc, char *argv[] )
         }
 
         // event selection
-        const double cal_ph = dynamic_range / static_cast<double>( ADC_MAX ) * 0.5 * 1000.0;  // (V / (ADC * 0.001))
+        const double cal_ph = dynamic_range / static_cast<double>( ADC_MAX ) / 0.5 * 1000.0;  // (V / (ADC * 0.001))
         h_spectrum_ph_all->Fill( ph * cal_ph );
         h_spectrum_area_all->Fill( area );
         h_pmin_pmax_all->Fill( pmin * cal_ph, ph * cal_ph );
