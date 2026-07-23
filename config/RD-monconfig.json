@@ -33,6 +33,28 @@
             "rate_Po212": "Po212",
             "rate_Po214": "Po214",
             "rate_Po218": "Po218"
+        },
+        "4": {
+            "detector": "RD4",
+            "activate": false,
+            "measurement": "radon",
+            "data_dir": "/home/msgc/RD4/data",
+            "ana_dir": "/home/msgc/RD4/ana",
+            "mon_dir": "/home/msgc/status/radon/RD4/rnmon",
+            "rate_Po212": "Po212",
+            "rate_Po214": "Po214",
+            "rate_Po218": "Po218"
+        },
+        "5": {
+            "detector": "RD5",
+            "activate": true,
+            "measurement": "radon",
+            "data_dir": "/home/msgc/RD5/data",
+            "ana_dir": "/home/msgc/RD5/ana",
+            "mon_dir": "/home/msgc/status/radon/RD5/rnmon",
+            "rate_Po212": "Po212",
+            "rate_Po214": "Po214",
+            "rate_Po218": "Po218"
         }
     },
     "influxdb": {
