@@ -8,7 +8,6 @@ import re
 import shutil
 import json
 
-CURRENT_PATH = os.getcwd()
 RDSW = os.environ["RDSW"]
 DEFAULT_CONFIG = os.path.join(RDSW, "config", "RD-anaconfig.json")
 
@@ -31,7 +30,7 @@ def arg_parser():
 
 def make_analysis_dir(period=None):
     # check data directory exists
-    current_dir = CURRENT_PATH
+    current_dir = os.getcwd()
     data_dir = current_dir.replace("ana", "data")
     if not os.path.exists(data_dir):
         print(f"  Error: Data directory '{data_dir}' does not exist.")
@@ -143,7 +142,7 @@ def make_config_files(config_path, analysis_dir, run_dir):
 
 
 def make_monitor_dir(run_dir):
-    current_dir = CURRENT_PATH
+    current_dir = os.getcwd()
     monitor_dir = os.path.join(current_dir, MONITOR_DIR)
     if not os.path.exists(monitor_dir):
         os.makedirs(monitor_dir)
