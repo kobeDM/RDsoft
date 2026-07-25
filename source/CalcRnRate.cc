@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <ctime>
+#include <functional>
 #include <getopt.h>
 #include <iostream>
 #include <string>
@@ -408,11 +409,26 @@ int main( int argc, char *argv[] )
     // excluded intervals from the nominal bin width. The same correction is
     // applied to the rate errors so that both the values and uncertainties
     // are normalized to the remaining live time.
-    int n_last_bin = static_cast<int>( last_time_in_days / time_win_hour * 24. ) + 1;
+    const double bin_width_days = time_win_hour / 24.;
+    int          n_last_bin     = static_cast<int>( last_time_in_days / time_win_hour * 24. ) + 1;
+
+    // Effective exposure per bin, kept around so the binned Poisson-likelihood
+    // fit below (see the fit_po*_cnt functors) can look up the exposure for
+    // any time bin without recomputing GetEffectiveExposureDays().
+    std::vector<double> effective_time_days( n_last_bin, 0.0 );
+
+    // Raw event counts per bin (as opposed to tg_po214/218/212, which store the
+    // derived rate). These histograms - not the TGraphErrors - are what the
+    // time-constant fit below is actually performed on.
+    TH1D *h_count_po214 = new TH1D( "h_count_po214", "h_count_po214", n_last_bin, 0.0, n_last_bin * bin_width_days );
+    TH1D *h_count_po218 = new TH1D( "h_count_po218", "h_count_po218", n_last_bin, 0.0, n_last_bin * bin_width_days );
+    TH1D *h_count_po212 = new TH1D( "h_count_po212", "h_count_po212", n_last_bin, 0.0, n_last_bin * bin_width_days );
+
     for ( int bin = 0; bin < n_last_bin; bin++ ) {
-        const double bin_start_days = static_cast<double>( bin ) * time_win_hour / 24.;
-        const double bin_end_days   = ( bin == n_last_bin - 1 ) ? last_time_in_days : static_cast<double>( bin + 1 ) * time_win_hour / 24.;
+        const double bin_start_days = static_cast<double>( bin ) * bin_width_days;
+        const double bin_end_days   = ( bin == n_last_bin - 1 ) ? last_time_in_days : static_cast<double>( bin + 1 ) * bin_width_days;
         const double effective_time = GetEffectiveExposureDays( bin_start_days, bin_end_days, runstarttime, exclude_ranges );
+        effective_time_days[bin]    = effective_time;
 
         double time           = 0.5 * ( bin_start_days + bin_end_days );
         double time_err       = 0.5 * ( bin_end_days - bin_start_days );
@@ -438,6 +454,10 @@ int main( int argc, char *argv[] )
         tg_po214->SetPointError( bin, time_err, rate_po214_err );
         tg_po218->SetPointError( bin, time_err, rate_po218_err );
         tg_po212->SetPointError( bin, time_err, rate_po212_err );
+
+        h_count_po214->SetBinContent( bin + 1, po214_count[bin] );
+        h_count_po218->SetBinContent( bin + 1, po218_count[bin] );
+        h_count_po212->SetBinContent( bin + 1, po212_count[bin] );
     }
 
     // For rate file
@@ -642,19 +662,52 @@ int main( int argc, char *argv[] )
         tg_mask->Draw( "F SAME" );
     }
 
-    TF1 *f_po218 = new TF1( "f_po218", "[0]*(1-exp(-(x+[2])/[1]))", fit_win_start_in_days, fit_win_end_in_days );
-    f_po218->SetParameter( 0, show_rate_max );
-    f_po218->FixParameter( 1, T_RADON220 );
-    f_po218->FixParameter( 2, measurement_offset_in_days );
-    TF1 *f_po214 = new TF1( "f_po214", "[0]*(1-exp(-(x+[2])/[1]))", fit_win_start_in_days, fit_win_end_in_days );
-    f_po214->SetParameter( 0, show_rate_max );
-    f_po214->FixParameter( 1, T_RADON220 );
-    f_po214->FixParameter( 2, measurement_offset_in_days );
-    TF1 *f_po212 = new TF1( "f_po212", "[0]", fit_win_start_in_days, fit_win_end_in_days );
+    // Fit the raw per-bin event counts with a binned Poisson-likelihood fit
+    // ("L" option). The fit function predicts the expected count in a bin as
+    // rate_model(t; par) * effective_exposure_time(bin), so exposure_at_time()
+    // looks up the correct (possibly excluded-range-shortened) exposure for
+    // whichever bin a given time falls into.
+    auto exposure_at_time = [&effective_time_days, bin_width_days, n_last_bin]( double t ) {
+        int bin = static_cast<int>( t / bin_width_days );
+        bin     = std::max( 0, std::min( n_last_bin - 1, bin ) );
+        return effective_time_days[bin];
+    };
 
-    tg_po218->Fit( f_po218, "Q", "", fit_win_start_in_days, fit_win_end_in_days );
-    tg_po214->Fit( f_po214, "Q", "", fit_win_start_in_days, fit_win_end_in_days );
-    tg_po212->Fit( f_po212, "Q", "", fit_win_start_in_days, fit_win_end_in_days );
+    std::function<double( const double *, const double * )> expected_count_rise = [exposure_at_time]( const double *x, const double *par ) {
+        const double rate = par[0] * ( 1 - exp( -( x[0] + par[2] ) / par[1] ) );
+        return rate * exposure_at_time( x[0] );
+    };
+    std::function<double( const double *, const double * )> expected_count_flat = [exposure_at_time]( const double *x, const double *par ) { return par[0] * exposure_at_time( x[0] ); };
+
+    TF1 *f_po218_cnt = new TF1( "f_po218_cnt", expected_count_rise, fit_win_start_in_days, fit_win_end_in_days, 3 );
+    f_po218_cnt->SetParameter( 0, show_rate_max * 0.2 );
+    f_po218_cnt->FixParameter( 1, T_RADON220 );
+    f_po218_cnt->FixParameter( 2, measurement_offset_in_days );
+    TF1 *f_po214_cnt = new TF1( "f_po214_cnt", expected_count_rise, fit_win_start_in_days, fit_win_end_in_days, 3 );
+    f_po214_cnt->SetParameter( 0, show_rate_max * 0.2 );
+    f_po214_cnt->FixParameter( 1, T_RADON220 );
+    f_po214_cnt->FixParameter( 2, measurement_offset_in_days );
+    TF1 *f_po212_cnt = new TF1( "f_po212_cnt", expected_count_flat, fit_win_start_in_days, fit_win_end_in_days, 1 );
+    f_po212_cnt->SetParameter( 0, show_rate_max * 0.2 );
+
+    h_count_po218->Fit( f_po218_cnt, "LQ0", "", fit_win_start_in_days, fit_win_end_in_days );
+    h_count_po214->Fit( f_po214_cnt, "LQ0", "", fit_win_start_in_days, fit_win_end_in_days );
+    h_count_po212->Fit( f_po212_cnt, "LQ0", "", fit_win_start_in_days, fit_win_end_in_days );
+
+    // f_po218/214/212 keep the original rate-vs-time formula so they can still be
+    // drawn on the tg_po218/214/212 rate graph; their parameters are copied from
+    // the count-based likelihood fit above instead of being re-fit against the
+    // graph.
+    TF1 *f_po218 = new TF1( "f_po218", "[0]*(1-exp(-(x+[2])/[1]))", fit_win_start_in_days, fit_win_end_in_days );
+    f_po218->SetParameters( f_po218_cnt->GetParameters( ) );
+    f_po218->SetParErrors( f_po218_cnt->GetParErrors( ) );
+    TF1 *f_po214 = new TF1( "f_po214", "[0]*(1-exp(-(x+[2])/[1]))", fit_win_start_in_days, fit_win_end_in_days );
+    f_po214->SetParameters( f_po214_cnt->GetParameters( ) );
+    f_po214->SetParErrors( f_po214_cnt->GetParErrors( ) );
+    TF1 *f_po212 = new TF1( "f_po212", "[0]", fit_win_start_in_days, fit_win_end_in_days );
+    f_po212->SetParameters( f_po212_cnt->GetParameters( ) );
+    f_po212->SetParErrors( f_po212_cnt->GetParErrors( ) );
+
     f_po218->Draw( "SAME" );
     f_po214->Draw( "SAME" );
     f_po212->Draw( "SAME" );
@@ -847,6 +900,9 @@ int main( int argc, char *argv[] )
     f_po214->Write( "f_po214" );
     f_po218->Write( "f_po218" );
     f_po212->Write( "f_po212" );
+    h_count_po214->Write( );
+    h_count_po218->Write( );
+    h_count_po212->Write( );
     h_waveform_all->Write( );
     h_waveform->Write( );
     output->Close( );
