@@ -29,8 +29,8 @@ const int PEDESTAL_SAMPLES = 100;
 const int ADC_MAX          = 4096;
 const int CLOCK_MAX        = 1024;
 
-const int WF_WIN_START = 480;
-const int WF_WIN_END   = 580;
+const int WF_WIN_START = 450;
+const int WF_WIN_END   = 750;
 
 const double ENE_PO218 = 6.00235;
 const double ENE_PO214 = 7.68682;
