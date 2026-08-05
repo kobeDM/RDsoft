@@ -1,3 +1,4 @@
-DIR=`pwd -P`
-export RDSW=${DIR}
-export PATH=${RDSW}/bin:${PATH}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+
+export RDSW="${SCRIPT_DIR}"
+export PATH="${RDSW}/scripts:${RDSW}/bin:${PATH}"

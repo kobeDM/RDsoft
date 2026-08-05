@@ -47,6 +47,24 @@ Here quick analysis will be performed by:
 $ cd ~RD?/data (?=1 or 2 or 3)
 $ runRD-ana.py (analysis runner) 
 ```
+
+If you want to exclude events from analysis by time range, edit the analysis config in `config/RD-anaconfig.json` and add one or more time windows under `ana.exclude_unixtime_ranges`.
+Each entry should contain a Unix time `start` and `end` value, and any event whose time span overlaps one of these intervals is skipped.
+The excluded live time is also removed from the rate normalization, so both the plotted rate values and the associated error bars are corrected accordingly.
+
+```json
+{
+  "ana": {
+    "exclude_unixtime_ranges": [
+      {"start": 1710000000, "end": 1710003600},
+      {"start": 1710010000, "end": 1710015000}
+    ]
+  }
+}
+```
+
+The same excluded intervals are shown as gray shaded bands in the rate plot for quick visual inspection.
+
 ## Analysis including influxdb update
 Grafana monitoring will be performed by: 
 ```
@@ -56,3 +74,5 @@ $ nohup runRD-mon.py &(monitoring runner including auto analysis)
 access http://10.37.0.216:3000/
 check the energy spectrum on na16:~/RD?/ana/YYYYmmDD/rnrate.png
 ```
+
+`runRD-mon.py` also uses the same exclusion config and skips events whose `#Ev.` header timestamp falls inside any excluded period.

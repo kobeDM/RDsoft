@@ -1,49 +1,75 @@
-{    
+{
     "interval": 300,
-    "detectors":{
-	"1": {
-	    "detector":"RD1",
-	    "measurement":"radon", 
-	    "data_dir": "/home/msgc/RD1/data",
-	    "ana_dir": "/home/msgc/RD1/ana",
-	    "mon_dir": "/home/msgc/status/radon/RD1/rnmon",
-	    "rate_Po212": "Po212",
-	    "rate_Po214": "Po214",
+    "detectors": {
+        "1": {
+            "detector": "RD1",
+            "activate": true,
+            "measurement": "radon",
+            "data_dir": "/home/msgc/RD1/data",
+            "ana_dir": "/home/msgc/RD1/ana",
+            "mon_dir": "/home/msgc/status/radon/RD1/rnmon",
+            "rate_Po212": "Po212",
+            "rate_Po214": "Po214",
             "rate_Po218": "Po218"
-	},
-	"2": {
-	    "detector":"RD2",
-	    "measurement":"radon",
-	    "data_dir": "/home/msgc/RD2/data",
-	    "ana_dir": "/home/msgc/RD2/ana",
-	    "mon_dir": "/home/msgc/status/radon/RD2/rnmon",
-	    "rate_Po212": "Po212",
-	    "rate_Po214": "Po214",
+        },
+        "2": {
+            "detector": "RD2",
+            "activate": false,
+            "measurement": "radon",
+            "data_dir": "/home/msgc/RD2/data",
+            "ana_dir": "/home/msgc/RD2/ana",
+            "mon_dir": "/home/msgc/status/radon/RD2/rnmon",
+            "rate_Po212": "Po212",
+            "rate_Po214": "Po214",
             "rate_Po218": "Po218"
-	},
-	"3": {
-		"detector":"RD3",
-		"measurement":"radon", 
-		"data_dir": "/home/msgc/RD3/data",
-		"ana_dir": "/home/msgc/RD3/ana",
-		"mon_dir": "/home/msgc/status/radon/RD3/rnmon",
-		"rate_Po212": "Po212",
-		"rate_Po214": "Po214",
-		"rate_Po218": "Po218"
-    },    
-    "influxdb":{
-        "host": "10.37.0.227",
+        },
+        "3": {
+            "detector": "RD3",
+            "activate": false,
+            "measurement": "radon",
+            "data_dir": "/home/msgc/RD3/data",
+            "ana_dir": "/home/msgc/RD3/ana",
+            "mon_dir": "/home/msgc/status/radon/RD3/rnmon",
+            "rate_Po212": "Po212",
+            "rate_Po214": "Po214",
+            "rate_Po218": "Po218"
+        },
+        "4": {
+            "detector": "RD4",
+            "activate": false,
+            "measurement": "radon",
+            "data_dir": "/home/msgc/RD4/data",
+            "ana_dir": "/home/msgc/RD4/ana",
+            "mon_dir": "/home/msgc/status/radon/RD4/rnmon",
+            "rate_Po212": "Po212",
+            "rate_Po214": "Po214",
+            "rate_Po218": "Po218"
+        },
+        "5": {
+            "detector": "RD5",
+            "activate": true,
+            "measurement": "radon",
+            "data_dir": "/home/msgc/RD5/data",
+            "ana_dir": "/home/msgc/RD5/ana",
+            "mon_dir": "/home/msgc/status/radon/RD5/rnmon",
+            "rate_Po212": "Po212",
+            "rate_Po214": "Po214",
+            "rate_Po218": "Po218"
+        }
+    },
+    "influxdb": {
+        "host": "10.37.0.216",
         "port": "8086",
         "user": "root",
         "passwd": "root",
         "database": "cn1",
-        "hostPC": "na16"
-	},
-	    "grafana": {
-		"activate": true,
+        "hostPC": "na16",
+        "batch_size": 1000
+    },
+    "grafana": {
+        "activate": true,
         "hostuser": "msgc",
-        "host": "10.37.0.227",
-        "img_dir": "/usr/share/grafana/public/img"
+        "host": "10.37.0.216",
+        "img_dir": "/home/msgc/grafana_img"
     }
-  }
 }

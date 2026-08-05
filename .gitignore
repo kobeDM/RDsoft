@@ -1,4 +1,7 @@
-bin/*
-!bin/*.py
-build/*
+bin
+build
 .vscode
+__pycache__
+.clang-format
+*.png
+*.pdf
