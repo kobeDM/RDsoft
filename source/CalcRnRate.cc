@@ -320,6 +320,12 @@ int main( int argc, char *argv[] )
     double last_time_in_days = 0;
     for ( Long64_t i = 0; i < nentries; i++ ) {
         tree->GetEntry( i );
+
+        const double event_time_in_days = ( t_timestamp - runstarttime ) / ( 24. * 60. * 60. );
+        if ( event_time_in_days > last_time_in_days ) {
+            last_time_in_days = event_time_in_days;
+        }
+
         double cal_factor = 0.001;  // Why not use dynamic range and ADC bits ... ?
         double area       = static_cast<double>( t_p_sum ) - static_cast<double>( PEDESTAL_SAMPLES ) * t_pedestal;
         double ph         = ( static_cast<double>( t_p_max ) - t_pedestal ) * cal_factor;
@@ -355,9 +361,8 @@ int main( int argc, char *argv[] )
         }
 
         // time calculation
-        double time_in_days = ( t_timestamp - runstarttime ) / ( 24. * 60. * 60. );
-        int    bin_idx      = static_cast<int>( time_in_days / time_win_hour * 24. );
-        int    day_idx      = static_cast<int>( time_in_days );
+        int bin_idx = static_cast<int>( event_time_in_days / time_win_hour * 24. );
+        int day_idx = static_cast<int>( event_time_in_days );
 
         // fill
         h_spectrum->Fill( ene );
@@ -375,7 +380,7 @@ int main( int argc, char *argv[] )
 
         if ( ene > po214_roi_min && ene < po214_roi_max ) {
             h_po214->Fill( ene );
-            if ( time_in_days > integ_win_start_in_days && time_in_days < integ_win_end_in_days ) {
+            if ( event_time_in_days > integ_win_start_in_days && event_time_in_days < integ_win_end_in_days ) {
                 h_po214_roi->Fill( ene );
             }
             po214_count[bin_idx]++;
@@ -383,7 +388,7 @@ int main( int argc, char *argv[] )
         }
         if ( ene > po218_roi_min && ene < po218_roi_max ) {
             h_po218->Fill( ene );
-            if ( time_in_days > integ_win_start_in_days && time_in_days < integ_win_end_in_days ) {
+            if ( event_time_in_days > integ_win_start_in_days && event_time_in_days < integ_win_end_in_days ) {
                 h_po218_roi->Fill( ene );
             }
             po218_count[bin_idx]++;
@@ -391,14 +396,12 @@ int main( int argc, char *argv[] )
         }
         if ( ene > po212_roi_min && ene < po212_roi_max ) {
             h_po212->Fill( ene );
-            if ( time_in_days > integ_win_start_in_days && time_in_days < integ_win_end_in_days ) {
+            if ( event_time_in_days > integ_win_start_in_days && event_time_in_days < integ_win_end_in_days ) {
                 h_po212_roi->Fill( ene );
             }
             po212_count[bin_idx]++;
             po212_count_day[day_idx]++;
         }
-
-        last_time_in_days = time_in_days;
     }
 
     std::cout << "Last time in days: " << last_time_in_days << std::endl;
